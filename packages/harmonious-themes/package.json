@@ -1,0 +1,33 @@
+{
+  "name": "harmonious-themes",
+  "version": "0.0.1",
+  "description": "Themes for a harmonious world.",
+  "author": "Chance Strickland <hi@chancedigital.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chancestrickland/harmonious-type.git",
+    "directory": "packages/harmonious-themes"
+  },
+  "scripts": {
+    "test": "cross-env CI=true ts-node ../../scripts/test --passWithNoTests",
+    "test:watch": "npm run test -- --watchAll",
+    "start": "cross-env NODE_ENV=development tsdx watch --verbose",
+    "dev": "yarn start",
+    "prebuild": "rimraf dist",
+    "build": "cross-env NODE_ENV=production tsdx build --format=cjs,esm,umd",
+    "prepublish": "npm run build",
+    "size": "size-limit",
+    "lint": "tsdx lint"
+  },
+  "dependencies": {
+    "tslib": "^1.11.2"
+  },
+  "main": "dist/index.js",
+  "module": "dist/harmonious-themes.esm.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "README.md",
+    "dist"
+  ]
+}

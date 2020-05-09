@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": ["packages", "types", "scripts"],
+  "compilerOptions": {
+    "allowJs": false,
+    "baseUrl": ".",
+    "typeRoots": ["./node_modules/@types", "./types"],
+    "paths": {
+      "*": ["node_modules/*"],
+      "harmonious-scale": ["packages/harmonious-scale/src"],
+      "harmonious-rhythm": ["packages/harmonious-rhythm/src"],
+      "harmonious-type": ["packages/harmonious-type/src"],
+      "harmonious-utils": ["packages/harmonious-utils/src"],
+      "harmonious-themes": ["packages/harmonious-themes/src"],
+      "$test/*": ["test/*"]
+    }
+  }
+}
