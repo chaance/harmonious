@@ -31,6 +31,9 @@ export function modularScale(
   } else if (ratios[ratio]) {
     r = ratios[ratio];
   } else {
+    if (__DEV__) {
+      console.warn('Invalid ratio provided to `modularScale`.')
+    }
     r = ratios.golden;
   }
 
