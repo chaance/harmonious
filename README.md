@@ -1,27 +1,24 @@
-# TSDX Bootstrap
+<div align="center">
+  <img src="https://raw.githubusercontent.com/chancestrickland/harmonious/master/static/harmonious.svg" width="440" height="98" alt="Harmonious" />
+</div>
 
-This project was bootstrapped with [TSDX](https://github.com/jaredpalmer/tsdx).
+<div align="center">
 
-## Local Development
+  [![Latest Release](https://img.shields.io/npm/v/harmonious-type.svg)](https://npm.im/harmonious-type) [![gzip size](http://img.badgesize.io/https://unpkg.com/harmonious-type@latest/dist/harmonious-type.cjs.production.min.js?compression=gzip)](https://unpkg.com/harmonious-type@latest/dist/harmonious-type.cjs.production.min.js) [![license](https://badgen.now.sh/badge/license/MIT)](./LICENSE)
 
-Below is a list of commands you will probably find useful.
+</div>
 
-### `npm start` or `yarn start`
+<h4 align="center">
+  Tools for painlessly creating harmonious topographic relationships.
+</h4>
 
-Runs the project in development/watch mode. Your project will be rebuilt upon changes. TSDX has a special logger for you convenience. Error messages are pretty printed and formatted for compatibility VS Code's Problems tab.
+<br>
 
-<img src="https://user-images.githubusercontent.com/4060187/52168303-574d3a00-26f6-11e9-9f3b-71dbec9ebfcb.gif" width="600" />
 
-Your library will be rebuilt if you make edits.
+[**TODO:** Link to docs]
 
-### `npm run build` or `yarn build`
+---
 
-Bundles the package to the `dist` folder.
-The package is optimized and bundled with Rollup into multiple formats (CommonJS, UMD, and ES Module).
+[**TODO:** Include docs for latest release inline]
 
-<img src="https://user-images.githubusercontent.com/4060187/52168322-a98e5b00-26f6-11e9-8cf6-222d716b75ef.gif" width="600" />
-
-### `npm test` or `yarn test`
-
-Runs the test watcher (Jest) in an interactive mode.
-By default, runs tests related to files changed since the last commit.
+---
