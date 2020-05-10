@@ -1,13 +1,14 @@
 import {
+  DEFAULT_BASE_FONT_SIZE,
+  CSSUnitConverter,
+  getCSSLengthConverter,
+  getDefiniteNumberWithFallback,
   unit,
   unitLess,
-  getCSSLengthConverter,
-  CSSUnitConverter,
-  DEFAULT_BASE_FONT_SIZE,
 } from 'harmonious-utils';
 
-const defaultConfig: Omit<
-  HarmoniousRhythmOptionsStrict,
+export const defaultConfig: Omit<
+  HarmoniousRhythmConfig,
   'baseLineHeightInPx'
 > = {
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
@@ -19,32 +20,74 @@ const defaultConfig: Omit<
   minLinePadding: 2,
 };
 
+/**
+ * Create a harmonious vertical rhythm from a provided `baseFontSize` and `baseLineHeight`.
+ *
+ * Based largely on functions from the Compass Vertical Rhythm utility.
+ *
+ * @see compass-vertical-rhythm - https://github.com/KyleAMathews/compass-vertical-rhythm
+ * @see Compass - http://compass-style.org/reference/compass/typography/vertical_rhythm/#function-rhythm
+ */
 export class HarmoniousRhythm {
-  private config: HarmoniousRhythmOptionsStrict;
-  private convert: CSSUnitConverter;
+  /**
+   * The configuration object for the HarmoniousRhythm instance.
+   *
+   * @type {HarmoniousRhythmConfig}
+   * @memberof HarmoniousRhythm
+   */
+  public readonly config: HarmoniousRhythmConfig;
+
+  /**
+   * Unit conversion method based on the base font size.
+   *
+   * @type {CSSUnitConverter}
+   * @memberof HarmoniousRhythm
+   */
+  public readonly convert: CSSUnitConverter;
+
+  /**
+   * The default font size for all text in pixels.
+   * Derived from the config object.
+   *
+   * @private
+   * @type {number}
+   * @memberof HarmoniousRhythm
+   */
   private baseFontSize: number;
+
   public constructor(options?: Partial<HarmoniousRhythmOptions>) {
     const [config, convert] = getConfig(options);
     this.config = config;
     this.convert = convert;
     this.baseFontSize = config.baseFontSize;
     this.rhythm = this.rhythm.bind(this);
+    this.rhythmicLineHeight = this.rhythmicLineHeight.bind(this);
     this.establishBaseline = this.establishBaseline.bind(this);
     this.linesForFontSize = this.linesForFontSize.bind(this);
     this.adjustFontSizeTo = this.adjustFontSizeTo.bind(this);
+    this.getLineHeightFromValue = this.getLineHeightFromValue.bind(this);
+    this.convert = this.convert.bind(this);
   }
 
+  /**
+   * Get a harmonious rhythm value.
+   *
+   * @param lines
+   * @param fontSize
+   * @param offset
+   */
   public rhythm(
     lines = 1,
-    fontSize: string | number | undefined = this.baseFontSize,
-    offset: number | undefined = 0
+    fontSize?: string | number | undefined,
+    offset?: number | undefined
   ) {
     const {
+      baseFontSize,
       convert,
       config: { baseLineHeightInPx, rhythmUnit },
     } = this;
     lines = lines ?? 1;
-    fontSize = fontSize ?? this.baseFontSize;
+    fontSize = fontSize ?? baseFontSize;
     offset = offset || 0;
 
     let length = lines * unitLess(baseLineHeightInPx) - offset + 'px';
@@ -54,9 +97,30 @@ export class HarmoniousRhythm {
     }
 
     // Limit to 5 decimals.
-    return parseFloat(unitLess(rhythmLength).toFixed(5)) + unit(rhythmLength);
+    return (
+      parseFloat(unitLess(rhythmLength).toFixed(5)) +
+      (unit(rhythmLength) || 'px')
+    );
   }
 
+  /**
+   * Get the line-height equivalent to a rhythm value.
+   *
+   * @param lines
+   * @param fontSize
+   * @param offset
+   */
+  public rhythmicLineHeight(
+    lines = 1,
+    fontSize?: string | number | undefined,
+    offset?: number | undefined
+  ) {
+    return this.getLineHeightFromValue(this.rhythm(lines, fontSize, offset));
+  }
+
+  /**
+   * Establishes a font baseline for the base font-size.
+   */
   public establishBaseline() {
     const {
       baseFontSize,
@@ -67,20 +131,14 @@ export class HarmoniousRhythm {
       // Set base fontsize in percent as older browsers (or just IE6) behave
       // weird otherwise.
       fontSize: (baseFontSize / 16) * 100 + '%',
-      lineHeight: baseLineHeight.toString(),
+      lineHeight: baseLineHeight,
     };
   }
 
   public linesForFontSize(fontSize: string | number) {
     const {
       convert,
-      baseFontSize,
-      config: {
-        baseLineHeight,
-        baseLineHeightInPx,
-        minLinePadding,
-        roundToNearestHalfLine,
-      },
+      config: { baseLineHeightInPx, minLinePadding, roundToNearestHalfLine },
     } = this;
     let fontSizeInPx = unitLess(convert(fontSize, 'px'));
     let lines = roundToNearestHalfLine
@@ -107,7 +165,7 @@ export class HarmoniousRhythm {
     const {
       convert,
       baseFontSize,
-      config: { rhythmUnit },
+      config: { rhythmUnit, baseLineHeight },
     } = this;
 
     lines = lines ?? 'auto';
@@ -124,10 +182,38 @@ export class HarmoniousRhythm {
       lines = this.linesForFontSize(toSize);
     }
 
+    let fontSize = convert(toSize, rhythmUnit, fromSize);
+    let lineHeightWithPossibleUnit = this.rhythm(lines, fromSize);
+    let lineHeight = this.getLineHeightFromValue(lineHeightWithPossibleUnit);
+
     return {
-      fontSize: String(convert(toSize, rhythmUnit, fromSize)),
-      lineHeight: this.rhythm(lines, fromSize),
+      fontSize,
+      lineHeight,
     };
+  }
+
+  /**
+   *
+   * @param value
+   * @param baseFontSize
+   * @param fallback
+   */
+  public getLineHeightFromValue(value: string | number) {
+    const {
+      convert,
+      baseFontSize,
+      config: { baseLineHeight },
+    } = this;
+
+    let lineHeight: number;
+    if (unit(value)) {
+      let lineHeightInPx = unitLess(convert(value, 'px'));
+      lineHeight = lineHeightInPx / baseFontSize;
+    } else {
+      let l = unitLess(value);
+      lineHeight = !isNaN(l) ? l / baseFontSize : baseLineHeight;
+    }
+    return lineHeight;
   }
 }
 
@@ -164,6 +250,7 @@ function getConfig(options: Partial<HarmoniousRhythmOptions> = defaultConfig) {
         defaultConfig.baseLineHeight
       );
   }
+
   return [
     {
       ...defaultConfig,
@@ -181,29 +268,9 @@ function getConfig(options: Partial<HarmoniousRhythmOptions> = defaultConfig) {
           'px'
         )
       ),
-    } as HarmoniousRhythmOptionsStrict,
+    } as HarmoniousRhythmConfig,
     convert,
   ] as const;
-}
-
-/**
- * Ensure we always get a proper unit distance a number.
- * If anything goes wrong we can just use the default.
- *
- * @param value
- */
-function getDefiniteNumberWithFallback(
-  value: string | number,
-  fallback: number
-) {
-  try {
-    let baseSize = unitLess(value);
-    if (isNaN(baseSize)) {
-      baseSize = fallback;
-    }
-    return baseSize;
-  } catch (e) {}
-  return fallback;
 }
 
 type BorderStyle =
@@ -228,7 +295,7 @@ export type HarmoniousRhythmOptions = {
   minLinePadding: string | number;
 };
 
-type HarmoniousRhythmOptionsStrict = {
+export type HarmoniousRhythmConfig = {
   baseFontSize: number;
   baseLineHeight: number;
   rhythmUnit: 'px' | 'em' | 'rem';

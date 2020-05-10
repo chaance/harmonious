@@ -1,6 +1,6 @@
 {
-  "name": "harmonious-type",
-  "description": "Calculate harmonious modular scaling values based on ratios from from http://www.modularscale.com",
+  "name": "harmonious",
+  "description": "Tools for painlessly creating harmonious topographic relationships",
   "author": "Chance Strickland <hi@chancedigital.io>",
   "license": "MIT",
   "repository": {

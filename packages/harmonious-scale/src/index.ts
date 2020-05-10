@@ -21,7 +21,7 @@ export const ratios = {
   phi: 1.61803398875,
 };
 
-export function modularScale(
+export function harmoniousScale(
   value = 0,
   ratio: number | keyof Ratios = 'golden'
 ) {
@@ -32,7 +32,7 @@ export function modularScale(
     r = ratios[ratio];
   } else {
     if (__DEV__) {
-      console.warn('Invalid ratio provided to `modularScale`.')
+      console.warn('Invalid ratio provided to `harmoniousScale`.')
     }
     r = ratios.golden;
   }
@@ -40,6 +40,6 @@ export function modularScale(
   return Math.pow(r, value);
 }
 
-export default modularScale;
+export default harmoniousScale;
 
 export type Ratios = typeof ratios;

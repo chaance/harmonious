@@ -1,7 +1,12 @@
-import { parseUnit } from 'harmonious-utils';
+import { parseUnit, unit } from 'harmonious-utils';
 import { HarmoniousRhythm } from '../src';
 
 describe('rhythm', () => {
+  it('should use rem as the default rhythm unit', () => {
+    let { rhythm } = new HarmoniousRhythm();
+    expect(unit(rhythm())).toEqual('rem');
+  });
+
   it('should calculate rhythm for rem', () => {
     let { rhythm } = new HarmoniousRhythm({
       baseFontSize: '21px',
@@ -57,20 +62,21 @@ describe('establishBaseline', () => {
   it('should return an object', () => {
     expect(establishBaseline()).toBeInstanceOf(Object);
   });
+
   it('should return an object with a fontSize and lineHeight defined', () => {
-    let result = establishBaseline();
-    expect(result.fontSize).toBeDefined();
-    expect(result.lineHeight).toBeDefined();
+    let { fontSize, lineHeight } = establishBaseline();
+    expect(fontSize).toBeDefined();
+    expect(lineHeight).toBeDefined();
   });
 
   it('should return fontSize with percent as its unit', () => {
-    let result = establishBaseline();
-    expect(parseUnit(result.fontSize)[1]).toEqual('%');
+    let { fontSize } = establishBaseline();
+    expect(parseUnit(fontSize)[1]).toEqual('%');
   });
 
-  it('should return unitless lineHeight', () => {
-    let result = establishBaseline();
-    expect(parseUnit(result.lineHeight)[1]).toEqual('');
+  it('should return unitless lineHeight as a number', () => {
+    let { lineHeight } = establishBaseline();
+    expect(typeof lineHeight).toBe('number');
   });
 
   it('should return lineHeight with units if specified', () => {
@@ -78,14 +84,14 @@ describe('establishBaseline', () => {
       baseLineHeight: '24px' as any,
       baseFontSize: 20,
     });
-    let result = establishBaseline();
-    expect(parseFloat(result.lineHeight)).toEqual(1.2); // baseLineHeight / baseFontSize
+    let { lineHeight } = establishBaseline();
+    expect(lineHeight).toEqual(1.2); // baseLineHeight / baseFontSize
   });
 
   it('should return sensible results', () => {
     let { fontSize, lineHeight } = establishBaseline();
     expect(fontSize).toEqual('150%');
-    expect(lineHeight).toEqual('1.25');
+    expect(lineHeight).toEqual(1.25);
   });
 });
 
@@ -125,8 +131,37 @@ describe('linesForFontSize', () => {
   });
 });
 
+describe('getLineHeightFromValue', () => {
+  let { getLineHeightFromValue } = new HarmoniousRhythm({
+    baseFontSize: 18,
+    baseLineHeight: 1.5,
+  });
+
+  it('should return the line-height equivalent of a given value', () => {
+    expect(getLineHeightFromValue('1rem')).toEqual(1);
+    expect(getLineHeightFromValue('1em')).toEqual(1);
+    expect(getLineHeightFromValue('20px')).toEqual(10 / 9);
+  });
+});
+
+describe('rhythmicLineHeight', () => {
+  let {
+    rhythm,
+    getLineHeightFromValue,
+    rhythmicLineHeight,
+  } = new HarmoniousRhythm({
+    baseFontSize: '21px',
+    baseLineHeight: 4 / 3,
+    rhythmUnit: 'rem',
+  });
+
+  it('should return the same as a manual calculation', () => {
+    expect(rhythmicLineHeight(2)).toEqual(getLineHeightFromValue(rhythm(2)));
+  });
+});
+
 describe('adjustFontSizeTo', () => {
-  let { adjustFontSizeTo, rhythm } = new HarmoniousRhythm({
+  let { adjustFontSizeTo, rhythmicLineHeight } = new HarmoniousRhythm({
     baseFontSize: '21px',
     baseLineHeight: 4 / 3,
     rhythmUnit: 'rem',
@@ -137,45 +172,45 @@ describe('adjustFontSizeTo', () => {
   });
 
   it('should return an object with a fontSize and lineHeight defined', () => {
-    let result = adjustFontSizeTo('16px');
-    expect(result.fontSize).toBeDefined();
-    expect(result.lineHeight).toBeDefined();
+    let { fontSize, lineHeight } = adjustFontSizeTo('16px');
+    expect(fontSize).toBeDefined();
+    expect(lineHeight).toBeDefined();
   });
 
   it('should accept px', () => {
-    let result = adjustFontSizeTo('63px');
-    expect(result.fontSize).toEqual('3rem');
-    expect(result.lineHeight).toBeDefined();
+    let { fontSize, lineHeight } = adjustFontSizeTo('63px');
+    expect(fontSize).toEqual('3rem');
+    expect(lineHeight).toBeDefined();
   });
 
   it('should accept rem', () => {
-    let result = adjustFontSizeTo('3rem');
-    expect(result.fontSize).toEqual('3rem');
-    expect(result.lineHeight).toBeDefined();
+    let { fontSize, lineHeight } = adjustFontSizeTo('3rem');
+    expect(fontSize).toEqual('3rem');
+    expect(lineHeight).toBeDefined();
   });
 
   it('should accept em', () => {
-    let result = adjustFontSizeTo('3em');
-    expect(result.fontSize).toEqual('3rem');
-    expect(result.lineHeight).toBeDefined();
+    let { fontSize, lineHeight } = adjustFontSizeTo('3em');
+    expect(fontSize).toEqual('3rem');
+    expect(lineHeight).toBeDefined();
   });
 
   it('should accept %', () => {
-    let result = adjustFontSizeTo('200%');
-    expect(result.fontSize).toEqual('2rem');
-    expect(result.lineHeight).toBeDefined();
+    let { fontSize, lineHeight } = adjustFontSizeTo('200%');
+    expect(fontSize).toEqual('2rem');
+    expect(lineHeight).toBeDefined();
   });
 
   it('should let you set explicit # of lines', () => {
-    let result = adjustFontSizeTo('3em', 3);
-    expect(result.fontSize).toEqual('3rem');
-    expect(result.lineHeight).toEqual(rhythm(3));
+    let { fontSize, lineHeight } = adjustFontSizeTo('3em', 3);
+    expect(fontSize).toEqual('3rem');
+    expect(lineHeight).toEqual(rhythmicLineHeight(3));
 
     //  Weird that Compass let's you set lineHeight to be smaller than
     //  fontSize. Guess there's potential use cases for this.
-    result = adjustFontSizeTo('3em', 2);
-    expect(result.fontSize).toEqual('3rem');
-    expect(result.lineHeight).toEqual(rhythm(2));
+    ({ fontSize, lineHeight } = adjustFontSizeTo('3em', 2));
+    expect(fontSize).toEqual('3rem');
+    expect(lineHeight).toEqual(rhythmicLineHeight(2));
   });
 
   it('should return values in whatever the set rhythmUnit is', () => {
@@ -184,10 +219,9 @@ describe('adjustFontSizeTo', () => {
       baseLineHeight: 4 / 3,
       rhythmUnit: 'em',
     });
-
-    let result = adjustFontSizeTo('3em', 3);
-    expect(result.fontSize).toEqual('3em');
-    expect(result.lineHeight).toBeDefined();
+    let { fontSize, lineHeight } = adjustFontSizeTo('3em', 3);
+    expect(fontSize).toEqual('3em');
+    expect(lineHeight).toBeDefined();
   });
 
   it('should work with em and fromSize', () => {
@@ -196,9 +230,8 @@ describe('adjustFontSizeTo', () => {
       baseLineHeight: 4 / 3,
       rhythmUnit: 'em',
     });
-
-    let result = adjustFontSizeTo('42px', 3, '10.5px');
-    expect(result.fontSize).toEqual('4em');
-    expect(result.lineHeight).toEqual('8em');
+    let { fontSize, lineHeight } = adjustFontSizeTo('42px', 3, '10.5px');
+    expect(fontSize).toEqual('4em');
+    expect(lineHeight).toEqual(8);
   });
 });

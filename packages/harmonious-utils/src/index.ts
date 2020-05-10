@@ -2,12 +2,60 @@ import isNumber from 'lodash/isNumber';
 
 export const DEFAULT_BASE_FONT_SIZE = 16;
 
+export const CSS_LENGTH_UNITS = [
+  '%',
+  'cap',
+  'ch',
+  'cm',
+  'em',
+  'ex',
+  'ic',
+  'in',
+  'lh',
+  'mm',
+  'pc',
+  'pt',
+  'px',
+  'Q',
+  'rem',
+  'rlh',
+  'vb',
+  'vh',
+  'vi',
+  'vmax',
+  'vmin',
+  'vw',
+];
+
+// Wrap font names in quotes, unless the font name is actually a keyword.
+// See https://stackoverflow.com/a/13752149 and https://www.w3.org/TR/CSS2/fonts.html#font-family-prop
+export const CSS_GENERIC_FONT_FAMILIES = [
+  'inherit',
+  'default',
+  'serif',
+  'sans-serif',
+  'monospace',
+  'fantasy',
+  'cursive',
+  '-apple-system',
+];
+
 /**
  * Get the unit from a string, assuming it is a CSS measurement value.
  * @param input The measurement to parse
  */
 export function unit(input: string | number) {
-  return String(input).match(/[\d.\-+]*\s*(.*)/)?.[1] || '';
+  if (typeof input !== 'string') return '';
+  return (
+    input.match(
+      // https://regex101.com/r/EtXKqV/3
+      RegExp(
+        `^(?:[\\d.\\-+\\s\\uFEFF\\xA0]*[\\s\\uFEFF\\xA0]*)(?:(${CSS_LENGTH_UNITS.join(
+          '|'
+        )})[\\s\\uFEFF\\xA0]*)$`
+      )
+    )?.[1] || ''
+  );
 }
 
 /**
@@ -38,6 +86,7 @@ export function getCSSLengthConverter(
   baseSize = baseSize ?? DEFAULT_BASE_FONT_SIZE;
 
   /**
+   * TODO: This needs tests!
    *
    * @param length - A css <length> value
    * @param toUnit - String matching a css unit keyword, e.g. 'em', 'rem', etc.
@@ -61,8 +110,8 @@ export function getCSSLengthConverter(
     let fromUnit = unit(length);
 
     // Optimize for cases where `from` and `to` units are accidentally the same.
-    if (fromUnit === toUnit) {
-      return length;
+    if (fromUnit && fromUnit === toUnit) {
+      return String(length);
     }
 
     // Convert input length to pixels.
@@ -86,7 +135,7 @@ export function getCSSLengthConverter(
       } else if (fromUnit === 'ex') {
         pxLength = unitLess(length) * unitLess(fromContext) * 2;
       } else {
-        return length;
+        return fromUnit ? String(length) : length + 'px';
       }
       // } else if (["ch", "vw", "vh", "vmin"].includes(fromUnit)) {
       // console.warn(`${fromUnit} units can't be reliably converted; Returning \
@@ -116,7 +165,7 @@ export function getCSSLengthConverter(
         // console.warn(`${toUnit} is an unknown or unsupported length unit; \
         // Returning original value.`)
       } else {
-        return length;
+        return String(length);
       }
     }
 
@@ -124,9 +173,30 @@ export function getCSSLengthConverter(
   };
 }
 
+/**
+ * Ensure we always get a proper unit distance as a number.
+ * If anything goes wrong we can just use the fallback.
+ *
+ * @param value
+ * @param fallback
+ */
+export function getDefiniteNumberWithFallback(
+  value: string | number,
+  fallback: number
+) {
+  try {
+    let baseSize = unitLess(value);
+    if (isNaN(baseSize)) {
+      baseSize = fallback;
+    }
+    return baseSize;
+  } catch (e) {}
+  return fallback;
+}
+
 export type CSSUnitConverter = (
   length: string | number,
-  toUnit: string,
+  toUnit: 'px' | 'em' | 'rem' | 'ex',
   fromContext?: string | number,
   toContext?: string | number
-) => string | number;
+) => string;
