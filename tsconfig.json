@@ -1,5 +1,5 @@
 {
-  "extends": "./tsconfig.base.json",
+  "extends": "./tsconfig.build.json",
   "include": ["packages", "types", "scripts"],
   "compilerOptions": {
     "allowJs": false,

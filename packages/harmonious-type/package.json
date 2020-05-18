@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "csstype": "^2.6.10",
+    "harmonious-rhythm": "^0.0.2",
     "harmonious-utils": "^0.0.2",
     "lodash": "^4.17.15",
     "postcss-js": "^2.0.3",
