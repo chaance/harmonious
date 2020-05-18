@@ -12,7 +12,8 @@
   "scripts": {
     "build": "lerna run build --stream",
     "test": "cross-env CI=true ts-node ./scripts/test packages",
-    "ver": "lerna version --no-push"
+    "ver": "lerna version --no-push",
+    "pub": "lerna publish"
   },
   "devDependencies": {
     "@babel/core": "^7.9.6",
