@@ -1,10 +1,12 @@
 import { isObject, isFunction } from 'lodash';
 import { HarmoniousType } from '../src';
+import fs from 'fs';
+import path from 'path';
+import prettier from 'prettier';
 
 describe('harmonious-type', () => {
   it('should return an object with all documented members', () => {
     let actual = new HarmoniousType();
-    expect(isObject(actual.config)).toBeTruthy();
     expect(isFunction(actual.rhythm)).toBeTruthy();
     expect(isFunction(actual.establishBaseline)).toBeTruthy();
     expect(isFunction(actual.linesForFontSize)).toBeTruthy();
@@ -48,19 +50,65 @@ describe('HarmoniousType.scale', () => {
 
 describe('HarmoniousType.toJSON', () => {
   it('should return CSS as JSON', () => {
-    let json = new HarmoniousType().toJSON();
+    let json = new HarmoniousType({
+      breakpoints: {
+        600: {
+          baseFontSize: 18,
+          scaleRatio: 2,
+        },
+        1000: {
+          baseFontSize: 22,
+          scaleRatio: 2.5,
+          baseLineHeight: 1.8,
+        },
+      },
+    }).toJSON();
     expect(isObject(json)).toBeTruthy();
     expect(json.html).toBeTruthy();
+
     // TODO: Use snapshot tests after stable is released
     // expect(json).toMatchSnapshot();
+
+    // Write a file we can manually inspect if we have any funky issues
+    // This should also catch basic syntax errors
+    expect(() => {
+      fs.writeFile(
+        path.resolve(__dirname, './test-output.json'),
+        prettier.format(JSON.stringify(json), { parser: 'json' }),
+        () => void null
+      );
+    }).not.toThrow();
   });
 });
 
 describe('HarmoniousType.toString', () => {
   it('should return CSS as a string', () => {
-    let string = new HarmoniousType().toString();
+    let string = new HarmoniousType({
+      breakpoints: {
+        600: {
+          baseFontSize: 18,
+          scaleRatio: 2,
+        },
+        1000: {
+          baseFontSize: 22,
+          scaleRatio: 2.5,
+          baseLineHeight: 1.8,
+        },
+      },
+    }).toString();
     expect(typeof string).toEqual('string');
+
     // TODO: Use snapshot tests after stable is released
     // expect(string).toMatchSnapshot();
+
+    // Write a file we can manually inspect if we have any funky issues
+    // This should also catch basic syntax errors
+    expect(() => {
+      fs.writeFile(
+        path.resolve(__dirname, './test-output.css'),
+        prettier.format(string, { parser: 'css' }),
+        () => void null
+      );
+    }).not.toThrow();
   });
 });

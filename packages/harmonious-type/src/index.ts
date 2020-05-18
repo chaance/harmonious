@@ -1,53 +1,10 @@
-/**
- * Hello! If you are reading this, I assume you're curious as to why I appear to
- * be creating a library that essentially does the same thing as another popular
- * library, even using much of the same code. At least, you would probably be
- * wondering that if you are familiar with Typography.js.
- *
- * Typography is a great library. I've used it on various projects over the
- * years and would use it again today. At the same time, there are some things
- * I'd like it to do a little differently:
- *
- *  - It lacks support for reconfiguring important options at various
- *    breakpoints, making it difficult to staticly generate media queries. I
- *    would love to explore using CSS custom properties for rhythm units, but we
- *    will need to be able to produce static CSS while maintaining some of the
- *    trickier dynamic stuff.
- *  - It feels too opinionated about things that aren't relevant to its core
- *    strength, which is the idea of "vertical rhythm" between typographic
- *    elements and components. In most projects, colors, font families and font
- *    weights are likely alredy defined elsewhere, and I often find myself
- *    negating Typography's styles in these cases anyway. Perhaps these could be
- *    better considered as opt-in plugins instead?
- *  - There are a variety of ways to add styles to a website these days. It'd be
- *    great to build an API that is more easily integrated with your project's
- *    existing style architecture.
- *  - Development on Typography appears to have stalled as of late. Its core
- *    behavior is simple enough to re-create, so it seemed like a fun project to
- *    explore a new API and new possibilities.
- *  - Could we componentize layout elements? I have some rough ideas here but am
- *    excited to explore.
- *  - Would love to explore fluid typography as a simple opt-in feature.
- *    https://css-tricks.com/snippets/css/fluid-typography/
- *
- * At the moment, I haven't done much other than copy a lot of Typography's
- * code, remove a lot of the stuff I don't want, and restructure the core tools
- * as classes (I know, everyone hates classes now blah blah blah). This is very
- * much in an exploratory phase and I will be updating the APIs and features
- * rapidly for the next few weeks. If you ever had any cool ideas you wanted to
- * see in Typography, feel free to open an issue here and let's explore
- * together!
- *
- * @see Typography.js https://github.com/KyleAMathews/typography.js
- */
-
 import {
   HarmoniousRhythm,
   HarmoniousRhythmOptions,
   HarmoniousRhythmConfig,
   defaultConfig as defaultRhythmConfig,
 } from 'harmonious-rhythm';
-import { harmoniousScale, ratios } from 'harmonious-scale';
+import { ratios } from 'harmonious-scale';
 import { isNumber, isObject, isString, kebabCase, pick } from 'lodash';
 import * as CSS from 'csstype';
 import {
@@ -56,48 +13,54 @@ import {
   unit,
 } from 'harmonious-utils';
 
-const defaultConfig: HarmoniousTypeConfig = {
+const rhythmConfigKeys = Object.keys(defaultRhythmConfig);
+
+const defaultConfig = {
   title: 'harmonious-type-default',
   baseFontSize: defaultRhythmConfig.baseFontSize,
   baseLineHeight: defaultRhythmConfig.baseLineHeight,
   headerLineHeight: 1.1,
   rhythmUnit: defaultRhythmConfig.rhythmUnit,
   scaleRatio: ratios.golden,
-  // headerFontFamily: [
-  //   '-apple-system',
-  //   'BlinkMacSystemFont',
-  //   'Segoe UI',
-  //   'Roboto',
-  //   'Oxygen',
-  //   'Ubuntu',
-  //   'Cantarell',
-  //   'Fira Sans',
-  //   'Droid Sans',
-  //   'Helvetica Neue',
-  //   'sans-serif',
-  // ],
-  // bodyFontFamily: ['georgia', 'serif'],
   blockMarginBottom: 1,
+  breakpoints: {} as Record<
+    string | number,
+    Omit<HarmoniousTypeOptions, 'breakpoints'>
+  >,
+  breakpointUnit: 'px' as const,
 };
 
 export class HarmoniousType {
   /**
-   * The configuration object for the HarmoniousRhythm instance.
+   * The configuration object for the HarmoniousType instance.
    *
    * @type {HarmoniousTypeConfig}
-   * @memberof HarmoniousRhythm
+   * @memberof HarmoniousType
    */
-  public readonly config: HarmoniousTypeConfig;
-
-  private _rhythm: HarmoniousRhythm;
+  private readonly config: HarmoniousTypeConfig;
 
   /**
    * Unit conversion method based on the base font size.
    *
    * @type {CSSUnitConverter}
-   * @memberof HarmoniousRhythm
+   * @memberof HarmoniousType
    */
   public readonly convert: CSSUnitConverter;
+
+  /**
+   * Base font size
+   * @type {number}
+   * @memberof HarmoniousType
+   */
+  public readonly baseFontSize: number;
+
+  /**
+   * The breakpoints defined as an ascending array
+   *
+   * @type {[0, ...number[]]}
+   * @memberof HarmoniousType
+   */
+  public readonly breakpoints: [0, ...number[]];
 
   public readonly rhythm: (
     lines?: number,
@@ -118,52 +81,70 @@ export class HarmoniousType {
 
   public readonly linesForFontSize: (fontSize: string | number) => number;
 
-  public readonly adjustFontSizeTo: (
-    toSize: string | number,
-    lines?: number | 'auto',
-    fromSize?: string | number | undefined
-  ) => { fontSize: string | number; lineHeight: number };
+  public readonly adjustFontSizeTo: FontSizeAdjustmentFunction;
 
   public readonly getLineHeightFromValue: (value: string | number) => number;
 
+  public readonly rhythms: {
+    0: HarmoniousRhythm;
+    [key: number]: HarmoniousRhythm;
+  };
+
+  public readonly scale: (
+    value?: number
+  ) => {
+    fontSize: string | number;
+    lineHeight: number;
+  };
+
   public constructor(opts?: HarmoniousTypeOptions) {
     this.config = getConfig(opts);
-    this._rhythm = new HarmoniousRhythm(
-      pick(this.config, Object.keys(defaultRhythmConfig))
-    );
-    this.convert = this._rhythm.convert.bind(this);
-    this.rhythm = this._rhythm.rhythm.bind(this);
-    this.rhythmicLineHeight = this._rhythm.rhythmicLineHeight.bind(this);
-    this.establishBaseline = this._rhythm.establishBaseline.bind(this);
-    this.linesForFontSize = this._rhythm.linesForFontSize.bind(this);
-    this.adjustFontSizeTo = this._rhythm.adjustFontSizeTo.bind(this);
-    this.getLineHeightFromValue = this._rhythm.getLineHeightFromValue.bind(
-      this
-    );
-  }
+    this.rhythms = Object.keys(this.config.breakpoints).reduce((prev, cur) => {
+      return {
+        ...prev,
+        [cur]: new HarmoniousRhythm(
+          pick(this.config.breakpoints[cur as any], rhythmConfigKeys)
+        ),
+      };
+    }, {}) as any;
 
-  public scale(value: number = 0) {
-    const { baseFontSize, scaleRatio } = this.config;
-    // This doesn't pick the right scale ratio if a theme has more than one ratio.
-    // Perhaps add optional parameter for a width and it'll get the ratio
-    // for this width. Tricky part is maxWidth could be set in non-pixels.
-    return this.adjustFontSizeTo(
-      harmoniousScale(value, scaleRatio) * baseFontSize
-    );
+    const baseRhythm = this.rhythms[0];
+
+    this.breakpoints = Object.keys(this.config.breakpoints)
+      .map((i) => parseInt(i, 10))
+      .filter((num) => !isNaN(num))
+      .sort() as any;
+
+    this.baseFontSize = baseRhythm.baseFontSize;
+    this.convert = baseRhythm.convert;
+    this.rhythm = baseRhythm.rhythm;
+    this.scale = baseRhythm.scale;
+    this.rhythmicLineHeight = baseRhythm.rhythmicLineHeight;
+    this.establishBaseline = baseRhythm.establishBaseline;
+    this.linesForFontSize = baseRhythm.linesForFontSize;
+    this.adjustFontSizeTo = baseRhythm.adjustFontSizeTo;
+    this.getLineHeightFromValue = baseRhythm.getLineHeightFromValue;
   }
 
   public toJSON() {
-    let { config, convert } = this;
     let styles: HarmoniousStyles = {};
-    const { fontSize, lineHeight } = this.establishBaseline();
+    let { config, rhythms } = this;
+    let { rhythmUnit } = config;
+    let setStyles = getStylesSetter(config, rhythms);
 
     // Base HTML styles.
-    styles = setStyles(styles, 'html', {
-      fontSize: fontSize,
-      lineHeight: lineHeight,
-      boxSizing: 'border-box',
-      overflowY: 'scroll',
-    });
+    styles = setStyles(
+      styles,
+      'html',
+      {
+        boxSizing: 'border-box',
+        overflowY: 'scroll',
+      },
+      ({ fontSize, lineHeight }) => ({
+        fontSize,
+        lineHeight,
+      })
+    );
 
     // box-sizing reset.
     styles = setStyles(styles, ['*', '*:before', '*:after'], {
@@ -187,16 +168,6 @@ export class HarmoniousType {
       maxWidth: '100%',
     });
 
-    // All block elements get one rhythm of bottom margin by default
-    // or whatever is passed in as option.
-    let blockMarginBottom = '';
-    if (isNumber(config.blockMarginBottom)) {
-      blockMarginBottom = this.rhythm(config.blockMarginBottom);
-    } else if (isString(config.blockMarginBottom)) {
-      blockMarginBottom = config.blockMarginBottom;
-    } else {
-      blockMarginBottom = this.rhythm(1);
-    }
     styles = setStyles(
       styles,
       [
@@ -233,36 +204,55 @@ export class HarmoniousType {
         paddingLeft: 0,
         paddingRight: 0,
         paddingTop: 0,
+      },
+      ({ blockMarginBottom }) => ({
         marginBottom: blockMarginBottom,
-      }
+      })
     );
 
     // Basic blockquote styles.
-    styles = setStyles(styles, 'blockquote', {
-      marginRight: this.rhythm(1),
-      marginBottom: blockMarginBottom,
-      marginLeft: this.rhythm(1),
-    });
+    styles = setStyles(
+      styles,
+      'blockquote',
+      null,
+      ({ blockMarginBottom, rhythm }) => ({
+        marginBottom: blockMarginBottom,
+        marginRight: rhythm(1),
+        marginLeft: rhythm(1),
+      })
+    );
 
     // hr.
-    styles = setStyles(styles, 'hr', {
-      background: 'currentColor',
-      border: 'none',
-      height: '1px',
-      marginBottom: `calc(${blockMarginBottom} - 1px)`,
-    });
+    styles = setStyles(
+      styles,
+      'hr',
+      {
+        background: 'currentColor',
+        border: 'none',
+        height: '1px',
+      },
+      ({ blockMarginBottom }) => ({
+        marginBottom: `calc(${blockMarginBottom} - 1px)`,
+      })
+    );
 
     // ol, ul.
-    styles = setStyles(styles, ['ol', 'ul'], {
-      listStylePosition: 'outside',
-      listStyleImage: 'none',
-      marginLeft: this.rhythm(1),
-    });
+    styles = setStyles(
+      styles,
+      ['ol', 'ul'],
+      {
+        listStylePosition: 'outside',
+        listStyleImage: 'none',
+      },
+      ({ rhythm }) => ({
+        marginLeft: rhythm(1),
+      })
+    );
 
     // li.
-    styles = setStyles(styles, 'li', {
+    styles = setStyles(styles, 'li', null, ({ blockMarginBottom }) => ({
       marginBottom: `calc(${blockMarginBottom} / 2)`,
-    });
+    }));
 
     // Remove default padding on list items.
     styles = setStyles(styles, ['ol li', 'ul li'], {
@@ -270,11 +260,16 @@ export class HarmoniousType {
     });
 
     // children ol, ul.
-    styles = setStyles(styles, ['li > ol', 'li > ul'], {
-      marginLeft: this.rhythm(1),
-      marginBottom: `calc(${blockMarginBottom} / 2)`,
-      marginTop: `calc(${blockMarginBottom} / 2)`,
-    });
+    styles = setStyles(
+      styles,
+      ['li > ol', 'li > ul'],
+      null,
+      ({ blockMarginBottom, rhythm }) => ({
+        marginLeft: rhythm(1),
+        marginBottom: `calc(${blockMarginBottom} / 2)`,
+        marginTop: `calc(${blockMarginBottom} / 2)`,
+      })
+    );
 
     // Remove margin-bottom on the last-child of a few block elements
     // The worst offender of this seems to be markdown => html compilers
@@ -282,20 +277,23 @@ export class HarmoniousType {
     styles = setStyles(
       styles,
       ['blockquote *:last-child', 'li *:last-child', 'p *:last-child'],
-      {
-        marginBottom: 0,
-      }
+      { marginBottom: 0 }
     );
 
     // Ensure li > p is 1/2 margin — this is another markdown => compiler oddity.
-    styles = setStyles(styles, ['li > p'], {
+    styles = setStyles(styles, ['li > p'], null, ({ blockMarginBottom }) => ({
       marginBottom: `calc(${blockMarginBottom} / 2)`,
-    });
+    }));
 
     // Make generally smaller elements, smaller.
-    styles = setStyles(styles, ['code', 'kbd', 'pre', 'samp'], {
-      ...adjustFontSizeTo(this, '85%'),
-    });
+    styles = setStyles(
+      styles,
+      ['code', 'kbd', 'pre', 'samp'],
+      null,
+      ({ convert, adjustFontSize }) => ({
+        ...adjustFontSizeTo(convert, adjustFontSize, '85%', rhythmUnit),
+      })
+    );
 
     // Abbr, Acronym.
     styles = setStyles(styles, ['abbr', 'acronym'], {
@@ -303,43 +301,65 @@ export class HarmoniousType {
       cursor: 'help',
     });
     styles['abbr[title]'] = {
-      borderBottom: `1px dotte`,
+      borderBottom: `1px dotted`,
       cursor: 'help',
       textDecoration: 'none',
     };
 
     // Table styles.
-    styles = setStyles(styles, ['table'], {
-      ...adjustFontSizeTo(this, config.baseFontSize + 'px'),
-      borderCollapse: 'collapse',
-      width: '100%',
-    });
-    styles = setStyles(styles, ['thead'], {
+    styles = setStyles(
+      styles,
+      ['table'],
+      {
+        borderCollapse: 'collapse',
+        width: '100%',
+      },
+      ({ convert, adjustFontSize, baseFontSize }) => ({
+        ...adjustFontSizeTo(
+          convert,
+          adjustFontSize,
+          baseFontSize + 'px',
+          rhythmUnit
+        ),
+      })
+    );
+    styles = setStyles(styles, 'thead', {
       textAlign: 'left',
     });
-    styles = setStyles(styles, ['td,th'], {
-      textAlign: 'left',
-      borderBottom: `1px solid`,
-      fontFeatureSettings: '"tnum"',
-      MozFontFeatureSettings: '"tnum"',
-      ['msFontFeatureSettings' as any]: '"tnum"',
-      WebkitFontFeatureSettings: '"tnum"',
-      paddingLeft: this.rhythm(2 / 3),
-      paddingRight: this.rhythm(2 / 3),
-      paddingTop: this.rhythm(1 / 2),
-      paddingBottom: `calc(${this.rhythm(1 / 2)} - 1px)`,
-    });
-    styles = setStyles(styles, 'th:first-child,td:first-child', {
+    styles = setStyles(
+      styles,
+      ['td', 'th'],
+      {
+        textAlign: 'left',
+        borderBottom: '1px solid',
+        fontFeatureSettings: '"tnum"',
+        MozFontFeatureSettings: '"tnum"',
+        ['msFontFeatureSettings' as any]: '"tnum"',
+        WebkitFontFeatureSettings: '"tnum"',
+      },
+      ({ rhythm }) => ({
+        paddingLeft: rhythm(2 / 3),
+        paddingRight: rhythm(2 / 3),
+        paddingTop: rhythm(1 / 2),
+        paddingBottom: `calc(${rhythm(1 / 2)} - 1px)`,
+      })
+    );
+    styles = setStyles(styles, ['th:first-child', 'td:first-child'], {
       paddingLeft: 0,
     });
-    styles = setStyles(styles, 'th:last-child,td:last-child', {
+    styles = setStyles(styles, ['th:last-child', 'td:last-child'], {
       paddingRight: 0,
     });
 
     // Create styles for headers.
-    styles = setStyles(styles, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], {
-      textRendering: 'optimizeLegibility',
-    });
+    styles = setStyles(
+      styles,
+      ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+      { textRendering: 'optimizeLegibility' },
+      ({ headerLineHeight }) => ({
+        lineHeight: headerLineHeight,
+      })
+    );
 
     // Header scale ratios
     [
@@ -357,38 +377,32 @@ export class HarmoniousType {
       -1.5 / 5,
     ].forEach((ratio, i) => {
       let headerElement = `h${i + 1}`;
-      styles = {
-        ...styles,
-        [headerElement]: {
-          ...(styles[headerElement] || null),
-          fontSize: convert(this.scale(ratio).fontSize, config.rhythmUnit),
-          lineHeight: config.headerLineHeight,
-        },
-      };
+
+      styles = setStyles(styles, headerElement, null, ({ convert, scale }) => ({
+        fontSize: convert(scale(ratio).fontSize, rhythmUnit),
+      }));
     });
 
-    // TODO add support for Breakpoints here.
+    const cascadified: typeof styles = {};
 
-    // Call plugins if any.
-    // if (Array.isArray(config.plugins)) {
-    //   styles = reduce(
-    //     config.plugins,
-    //     (stylesObj, plugin) => merge(stylesObj, plugin(ht, config, stylesObj)),
-    //     styles
-    //   );
-    // }
+    Object.keys(styles)
+      .sort((a, b) => {
+        if (a.startsWith('@') && b.startsWith('@')) {
+          return a > b ? -1 : a < b ? 1 : 0;
+        }
+        if (a.startsWith('@')) {
+          return 1;
+        }
+        if (b.startsWith('@')) {
+          return -1;
+        }
+        return 0;
+      })
+      .forEach((key) => {
+        cascadified[key] = styles[key];
+      });
 
-    // Call overrideStyles function on config (if set).
-    // if (config.overrideStyles && isFunction(config.overrideStyles)) {
-    //   styles = merge(styles, config.overrideStyles(ht, config, styles));
-    // }
-
-    // // Call overrideThemeStyles function on config (if set).
-    // if (config.overrideThemeStyles && isFunction(config.overrideThemeStyles)) {
-    //   styles = merge(styles, config.overrideThemeStyles(ht, config, styles));
-    // }
-
-    return styles;
+    return cascadified;
   }
 
   public toString() {
@@ -402,36 +416,170 @@ export default HarmoniousType;
  * Merge user options with our default to get a reliable config.
  * @param options
  */
-function getConfig(options?: HarmoniousTypeOptions | undefined) {
-  options = options || (defaultConfig as any);
-  // Base font size is important!
-  let baseFontSize = getDefiniteNumberWithFallback(
-    options!.baseFontSize || defaultConfig.baseFontSize,
-    defaultConfig.baseFontSize
-  );
+function getConfig(
+  options?: HarmoniousTypeOptions | undefined
+): HarmoniousTypeConfig {
+  let opts = {
+    ...defaultConfig,
+    ...(options || {}),
+  };
+
+  // Base config will be used for our zero breakpoint value
+  let baseConfig = {
+    baseFontSize: getDefiniteNumberWithFallback(
+      opts.baseFontSize,
+      defaultConfig.baseFontSize
+    ),
+    baseLineHeight: opts.baseLineHeight,
+    headerLineHeight: opts.headerLineHeight,
+    scaleRatio: opts.scaleRatio,
+    blockMarginBottom: opts.blockMarginBottom,
+  };
+
+  // We want to search our breakpoints in descending order to find the largest
+  // value that is less than the value being searched for
+  let breakpointKeys = Object.keys(opts.breakpoints)
+    .map((bp) => parseInt(bp, 10))
+    .filter((num) => !isNaN(num))
+    .sort((a, b) => b - a);
+
+  let breakpoints: HarmoniousTypeConfig['breakpoints'] = breakpointKeys
+    .sort()
+    .reduce(
+      (prev, cur) => {
+        return {
+          ...prev,
+          [cur]: {
+            baseFontSize: getDefiniteNumberWithFallback(
+              findBreakpointMatch('baseFontSize', cur),
+              defaultConfig.baseFontSize
+            ),
+            baseLineHeight: findBreakpointMatch('baseLineHeight', cur),
+            headerLineHeight: findBreakpointMatch('headerLineHeight', cur),
+            scaleRatio: findBreakpointMatch('scaleRatio', cur),
+            blockMarginBottom: findBreakpointMatch('blockMarginBottom', cur),
+          },
+        };
+      },
+      { 0: baseConfig }
+    );
 
   return {
-    ...defaultConfig,
-    ...options,
-    baseFontSize,
-  } as HarmoniousTypeConfig;
+    ...pick(opts, ['title', 'rhythmUnit', 'breakpointUnit']),
+    breakpoints,
+  };
+
+  function findBreakpointMatch(property: any, breakpoint: number): any {
+    let p = property as keyof BaseOptions; // 💩
+    if (opts.breakpoints[breakpoint][p]) {
+      return opts.breakpoints[breakpoint][p];
+    }
+    for (let bp of breakpointKeys) {
+      if (opts.breakpoints[bp][p] && bp <= breakpoint) {
+        return opts.breakpoints[bp][p];
+      }
+    }
+    return opts[p];
+  }
 }
 
-function setStyles(
-  styles: HarmoniousStyles = {},
-  els: string | string[],
-  rules: CSS.Properties
+function getMediaQueryString(value: string | number) {
+  return `@media screen and (min-width: ${
+    unit(value) ? (value as string) : value + 'px'
+  })`;
+}
+
+function getStylesSetter(
+  config: HarmoniousTypeConfig,
+  rhythms: {
+    [key: number]: HarmoniousRhythm;
+    0: HarmoniousRhythm;
+  }
 ) {
-  let elements = Array.isArray(els) ? els : [els];
-  return elements.reduce<HarmoniousStyles>((output, element) => {
-    return {
-      ...output,
-      [element]: {
-        ...(output[element] || null),
-        ...rules,
-      },
-    };
-  }, styles);
+  return function setStyles(
+    styles: HarmoniousStyles,
+    selectors: string | string[],
+    baseRules: CSS.Properties | null,
+    responsiveRules?: (sizes: {
+      baseFontSize: number;
+      fontSize: string;
+      lineHeight: number;
+      headerLineHeight: number;
+      convert: CSSUnitConverter;
+      blockMarginBottom: string;
+      rhythm: RhythmFunction;
+      adjustFontSize: FontSizeAdjustmentFunction;
+      scale: ScaleFunction;
+    }) => CSS.Properties
+  ): HarmoniousStyles {
+    let selector = Array.isArray(selectors) ? selectors.join(',') : selectors;
+
+    return Object.keys(rhythms).reduce((output, breakpoint) => {
+      let bp = parseInt(breakpoint, 10);
+      let hm = rhythms[bp];
+      let { fontSize, lineHeight } = hm.establishBaseline();
+      let { convert, rhythm, baseFontSize, scale } = hm;
+      let { blockMarginBottom: bmb, headerLineHeight } = config.breakpoints[bp];
+      let blockMarginBottom = '';
+      if (isNumber(bmb)) {
+        blockMarginBottom = rhythm(bmb);
+      } else if (unit(bmb)) {
+        blockMarginBottom = bmb as any;
+      } else {
+        blockMarginBottom = rhythm(1);
+      }
+
+      hm.adjustFontSizeTo;
+
+      let scaledRules = responsiveRules
+        ? responsiveRules({
+            baseFontSize,
+            blockMarginBottom,
+            convert,
+            fontSize,
+            headerLineHeight,
+            lineHeight,
+            rhythm,
+            adjustFontSize: hm.adjustFontSizeTo,
+            scale,
+          })
+        : {};
+
+      if (bp == 0) {
+        let rules = {
+          ...((output as any)[selector] || {}),
+          ...(baseRules || {}),
+          ...scaledRules,
+        };
+        return Object.keys(rules).length
+          ? {
+              ...output,
+              [selector]: {
+                ...((output as any)[selector] || {}),
+                ...(baseRules || {}),
+                ...scaledRules,
+              },
+            }
+          : output;
+      }
+
+      let querySelector = getMediaQueryString(breakpoint);
+      let selectorRules = {
+        ...((output as any)[querySelector]?.[selector] || {}),
+        ...scaledRules,
+      };
+      let selectorStyles = Object.keys(selectorRules).length
+        ? { [selector]: selectorRules }
+        : {};
+      let queryStyles = {
+        ...((output as any)[querySelector] || {}),
+        ...selectorStyles,
+      };
+      return Object.keys(queryStyles).length
+        ? { ...output, [querySelector]: queryStyles }
+        : output;
+    }, styles);
+  };
 }
 
 function compileStyles(styles: HarmoniousStyles) {
@@ -459,13 +607,14 @@ function compileStyles(styles: HarmoniousStyles) {
 }
 
 // Shortcut for adjusting style object to reflect new font size on adjustments
-function adjustFontSizeTo(ht: HarmoniousType, toValue: string) {
-  return Object.entries(ht.adjustFontSizeTo(toValue)).reduce<CSS.Properties>(
+function adjustFontSizeTo(
+  convert: CSSUnitConverter,
+  adjust: FontSizeAdjustmentFunction,
+  toValue: string,
+  rhythmUnit: 'px' | 'em' | 'rem'
+) {
+  return Object.entries(adjust(toValue)).reduce<CSS.Properties>(
     (acc, [prop, value]) => {
-      const {
-        convert,
-        config: { rhythmUnit },
-      } = ht;
       return {
         ...acc,
         [prop]: unit(value) ? value : convert(value, rhythmUnit),
@@ -475,7 +624,7 @@ function adjustFontSizeTo(ht: HarmoniousType, toValue: string) {
   );
 }
 
-export type HarmoniousTypeOptions = {
+type BaseOptions = {
   title?: string;
   baseFontSize?: HarmoniousRhythmOptions['baseFontSize'];
   baseLineHeight?: HarmoniousRhythmOptions['baseLineHeight'];
@@ -483,36 +632,48 @@ export type HarmoniousTypeOptions = {
   rhythmUnit?: HarmoniousRhythmOptions['rhythmUnit'];
   scaleRatio?: number;
   blockMarginBottom?: number;
+};
 
-  breakpoints?: {};
+export type HarmoniousTypeOptions = BaseOptions & {
+  breakpoints?: Record<string | number, BaseOptions>;
+  breakpointUnit?: 'px' | 'rem';
+};
 
-  overrideStyles?: (
-    harmoniousRhythm: HarmoniousRhythm,
-    options: Omit<
-      HarmoniousTypeOptions,
-      'overrideStyles' | 'overrideThemeStyles' | 'plugins'
-    >,
-    styles: any // ??
-  ) => Object;
-  overrideThemeStyles?: (
-    harmoniousRhythm: HarmoniousRhythm,
-    options: Omit<
-      HarmoniousTypeOptions,
-      'overrideStyles' | 'overrideThemeStyles' | 'plugins'
-    >,
-    styles: any // ??
-  ) => Object;
-  plugins?: any[];
+type HarmoniousTypeConfigBase = {
+  baseFontSize: number;
+  baseLineHeight: number;
+  headerLineHeight: number;
+  scaleRatio: number;
+  blockMarginBottom: number;
 };
 
 export type HarmoniousTypeConfig = {
   title: string;
-  baseFontSize: HarmoniousRhythmConfig['baseFontSize'];
-  baseLineHeight: HarmoniousRhythmConfig['baseLineHeight'];
-  headerLineHeight: HarmoniousRhythmConfig['baseLineHeight'];
-  rhythmUnit: HarmoniousRhythmConfig['rhythmUnit'];
-  scaleRatio: number;
-  blockMarginBottom: number;
+  rhythmUnit: 'px' | 'em' | 'rem';
+  breakpointUnit: 'px' | 'rem';
+  breakpoints: {
+    0: HarmoniousTypeConfigBase;
+    [key: number]: HarmoniousTypeConfigBase;
+  };
 };
+
+export type RhythmFunction = (
+  lines?: number,
+  fontSize?: string | number | undefined,
+  offset?: number | undefined
+) => string;
+
+export type ScaleFunction = (
+  value?: number
+) => {
+  fontSize: string;
+  lineHeight: number;
+};
+
+type FontSizeAdjustmentFunction = (
+  toSize: string | number,
+  lines?: number | 'auto',
+  fromSize?: string | number | undefined
+) => { fontSize: string | number; lineHeight: number };
 
 export type HarmoniousStyles = { [key: string]: CSS.Properties };

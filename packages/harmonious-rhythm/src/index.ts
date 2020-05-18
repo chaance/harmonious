@@ -6,6 +6,7 @@ import {
   unit,
   unitLess,
 } from 'harmonious-utils';
+import { harmoniousScale, ratios } from 'harmonious-scale';
 
 export const defaultConfig: Omit<
   HarmoniousRhythmConfig,
@@ -13,11 +14,12 @@ export const defaultConfig: Omit<
 > = {
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
   baseLineHeight: 1.5,
-  rhythmUnit: 'rem',
-  defaultRhythmBorderWidth: 1,
   defaultRhythmBorderStyle: 'solid',
-  roundToNearestHalfLine: true,
+  defaultRhythmBorderWidth: 1,
   minLinePadding: 2,
+  rhythmUnit: 'rem',
+  roundToNearestHalfLine: true,
+  scaleRatio: ratios.golden,
 };
 
 /**
@@ -32,10 +34,11 @@ export class HarmoniousRhythm {
   /**
    * The configuration object for the HarmoniousRhythm instance.
    *
+   * @private
    * @type {HarmoniousRhythmConfig}
    * @memberof HarmoniousRhythm
    */
-  public readonly config: HarmoniousRhythmConfig;
+  private readonly config: HarmoniousRhythmConfig;
 
   /**
    * Unit conversion method based on the base font size.
@@ -53,7 +56,7 @@ export class HarmoniousRhythm {
    * @type {number}
    * @memberof HarmoniousRhythm
    */
-  private baseFontSize: number;
+  public readonly baseFontSize: number;
 
   public constructor(options?: Partial<HarmoniousRhythmOptions>) {
     const [config, convert] = getConfig(options);
@@ -67,6 +70,7 @@ export class HarmoniousRhythm {
     this.adjustFontSizeTo = this.adjustFontSizeTo.bind(this);
     this.getLineHeightFromValue = this.getLineHeightFromValue.bind(this);
     this.convert = this.convert.bind(this);
+    this.scale = this.scale.bind(this);
   }
 
   /**
@@ -100,6 +104,16 @@ export class HarmoniousRhythm {
     return (
       parseFloat(unitLess(rhythmLength).toFixed(5)) +
       (unit(rhythmLength) || 'px')
+    );
+  }
+
+  public scale(value: number = 0) {
+    const { baseFontSize, scaleRatio } = this.config;
+    // This doesn't pick the right scale ratio if a theme has more than one ratio.
+    // Perhaps add optional parameter for a width and it'll get the ratio
+    // for this width. Tricky part is maxWidth could be set in non-pixels.
+    return this.adjustFontSizeTo(
+      harmoniousScale(value, scaleRatio) * baseFontSize
     );
   }
 
@@ -274,34 +288,36 @@ function getConfig(options: Partial<HarmoniousRhythmOptions> = defaultConfig) {
 }
 
 type BorderStyle =
-  | 'none'
-  | 'hidden'
-  | 'dotted'
   | 'dashed'
-  | 'solid'
+  | 'dotted'
   | 'double'
   | 'groove'
-  | 'ridge'
+  | 'hidden'
   | 'inset'
-  | 'outset';
+  | 'none'
+  | 'outset'
+  | 'ridge'
+  | 'solid';
 
 export type HarmoniousRhythmOptions = {
   baseFontSize: string | number;
   baseLineHeight: number;
-  rhythmUnit: 'px' | 'em' | 'rem';
-  defaultRhythmBorderWidth: string | number;
   defaultRhythmBorderStyle: BorderStyle;
-  roundToNearestHalfLine: boolean;
+  defaultRhythmBorderWidth: string | number;
   minLinePadding: string | number;
+  rhythmUnit: 'px' | 'em' | 'rem';
+  roundToNearestHalfLine: boolean;
+  scaleRatio?: number;
 };
 
 export type HarmoniousRhythmConfig = {
   baseFontSize: number;
   baseLineHeight: number;
-  rhythmUnit: 'px' | 'em' | 'rem';
-  defaultRhythmBorderWidth: number;
-  defaultRhythmBorderStyle: BorderStyle;
-  roundToNearestHalfLine: boolean;
-  minLinePadding: number;
   baseLineHeightInPx: number;
+  defaultRhythmBorderStyle: BorderStyle;
+  defaultRhythmBorderWidth: number;
+  minLinePadding: number;
+  rhythmUnit: 'px' | 'em' | 'rem';
+  roundToNearestHalfLine: boolean;
+  scaleRatio: number;
 };
