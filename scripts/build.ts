@@ -199,6 +199,28 @@ async function buildAction() {
       });
     logger(promise, 'Building modules');
     await promise;
+
+    // The typescript rollup plugin let's tsc handle dumping the declaration
+    // file. Ocassionally its methods for determining where to dump it
+    // results in it ending up in a sub-directory rather than adjacent to
+    // the bundled code, which we don't want. Unclear exactly why, but this
+    // script moves it back after rollup is done.
+    // https://github.com/ezolenko/rollup-plugin-typescript2/issues/136
+    let declarationFile = path.resolve(
+      paths.packageDist,
+      `${opts.name}/src/index.d.ts`
+    );
+    if (fs.existsSync(declarationFile)) {
+      try {
+        await fs.move(
+          declarationFile,
+          path.resolve(paths.packageDist, 'index.d.ts')
+        );
+        await cleanEmptyFoldersRecursively(path.resolve(paths.packageDist));
+      } catch (e) {
+        console.error(e);
+      }
+    }
   } catch (error) {
     logError(error);
     process.exit(1);
@@ -282,4 +304,24 @@ function createAllFormats(
     //   input,
     // },
   ].filter(Boolean) as [ScriptOpts, ...ScriptOpts[]];
+}
+
+async function cleanEmptyFoldersRecursively(dir: string) {
+  // lstat does not follow symlinks
+  let fileStats = await fs.lstat(dir);
+  if (!fileStats.isDirectory()) {
+    return;
+  }
+  let fileNames = await fs.readdir(dir);
+  if (fileNames.length) {
+    let recursiveRemovalPromises = fileNames.map((fileName) =>
+      cleanEmptyFoldersRecursively(path.join(dir, fileName))
+    );
+    await Promise.all(recursiveRemovalPromises);
+    fileNames = await fs.readdir(dir);
+  }
+
+  if (!fileNames.length) {
+    await fs.rmdir(dir);
+  }
 }

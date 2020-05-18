@@ -30,6 +30,7 @@
     "@types/lodash": "^4.14.150",
     "@types/mri": "^1.1.0",
     "@types/prettier": "^2.0.0",
+    "@types/rimraf": "^3.0.0",
     "@types/rollup-plugin-sourcemaps": "^0.4.2",
     "asyncro": "^3.0.0",
     "babel-jest": "26.0.1",
