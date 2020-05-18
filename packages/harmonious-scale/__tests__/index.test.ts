@@ -1,4 +1,4 @@
-import { harmoniousScale, ratios } from '../src';
+import { harmoniousScale, ratios } from 'harmonious-scale';
 
 describe('harmonious-scale', () => {
   it('should exist', () => {

@@ -1,5 +1,5 @@
 import { isObject, isFunction } from 'lodash';
-import { HarmoniousType } from '../src';
+import { HarmoniousType } from 'harmonious-type';
 import fs from 'fs';
 import path from 'path';
 import prettier from 'prettier';
@@ -74,7 +74,10 @@ describe('HarmoniousType.toJSON', () => {
     // We want the JSON to resolve to valid CSS-in-JS syntax, parsable by
     // PostCSS. We may want to consider using PostCSS in the tool directly
     // though that might be unecessary.
-    let { css } = await postcss().process(json, { parser: postcssJs });
+    let { css } = await postcss().process(json, {
+      parser: postcssJs,
+      from: undefined,
+    });
     expect(typeof css).toBe('string');
 
     // Write a file we can manually inspect if we have any funky issues

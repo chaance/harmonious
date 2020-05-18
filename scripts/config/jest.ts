@@ -20,7 +20,6 @@ export default {
     '[/\\\\]node_modules[/\\\\].+\\.(js|jsx)$',
     '^.+\\.js$',
   ],
-  // projects: ["<rootDir>", "<rootDir>/packages/*"],
   rootDir: paths.packageRoot,
   watchPlugins: [
     require.resolve('jest-watch-typeahead/filename'),

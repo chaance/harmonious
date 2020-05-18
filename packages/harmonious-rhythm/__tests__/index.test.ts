@@ -1,5 +1,5 @@
 import { parseUnit, unit } from 'harmonious-utils';
-import { HarmoniousRhythm } from '../src';
+import { HarmoniousRhythm } from 'harmonious-rhythm';
 
 describe('rhythm', () => {
   it('should use rem as the default rhythm unit', () => {

@@ -1,7 +1,8 @@
+// Forked and simplified from https://github.com/jaredpalmer/tsdx
 import * as jest from 'jest';
 import jestConfig from './config/jest';
 import path from 'path';
-import { appDirectory } from './utils';
+import { paths } from './constants';
 
 async function testAction() {
   const cwd = process.cwd();
@@ -31,7 +32,7 @@ async function testAction() {
     );
   } else if (
     // If we are in a package directory, only test that package
-    appDirectory !== cwd &&
+    paths.projectRoot !== cwd &&
     path.basename(path.resolve(cwd, '../')) === 'packages'
   ) {
     argv.push(`packages/(${path.basename(cwd)})`);

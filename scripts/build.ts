@@ -5,10 +5,8 @@ import json from '@rollup/plugin-json';
 import replace from '@rollup/plugin-replace';
 import resolve from '@rollup/plugin-node-resolve';
 import asyncro from 'asyncro';
-import { merge } from 'lodash';
 import path from 'path';
 import { rollup, RollupOptions, OutputOptions } from 'rollup';
-import babelPlugin from 'rollup-plugin-babel';
 import sourceMaps from 'rollup-plugin-sourcemaps';
 import { terser } from 'rollup-plugin-terser';
 import typescript from 'rollup-plugin-typescript2';
@@ -22,6 +20,7 @@ import {
   parseArgs,
 } from './utils';
 import { ScriptOpts, NormalizedOpts } from './types';
+import babelPlugin from './config/babel';
 import * as fs from 'fs-extra';
 
 // shebang cache map thing because the transform only gets run once
@@ -140,7 +139,7 @@ export async function createRollupConfig(
         },
         check: !opts.transpileOnly,
       }),
-      babelPluginReach({
+      babelPlugin({
         exclude: 'node_modules/**',
         extensions: [...DEFAULT_EXTENSIONS, 'ts', 'tsx'],
         passPerPreset: true,
@@ -170,60 +169,6 @@ export async function createRollupConfig(
     ],
   };
 }
-
-export const babelPluginReach = babelPlugin.custom(() => ({
-  // Passed the plugin options.
-  options({ custom: customOptions, ...pluginOptions }: any) {
-    return {
-      // Pull out any custom options that the plugin might have.
-      customOptions,
-
-      // Pass the options back with the two custom options removed.
-      pluginOptions,
-    };
-  },
-  config(config: any, { customOptions }: any) {
-    const defaultPlugins = createConfigItems('plugin', [
-      { name: 'babel-plugin-annotate-pure-calls' },
-      { name: 'babel-plugin-dev-expression' },
-      {
-        name: '@babel/plugin-proposal-class-properties',
-        loose: true,
-      },
-      { name: '@babel/plugin-proposal-optional-chaining' },
-      { name: '@babel/plugin-proposal-nullish-coalescing-operator' },
-      { name: 'babel-plugin-macros' },
-    ]);
-
-    const babelOptions = config.options || {};
-    babelOptions.presets = babelOptions.presets || [];
-
-    const defaultPresets = createConfigItems('preset', [
-      {
-        name: '@babel/preset-env',
-        targets: customOptions.targets,
-        modules: false,
-        loose: true,
-        exclude: ['transform-async-to-generator', 'transform-regenerator'],
-      },
-    ]);
-
-    babelOptions.presets = mergeConfigItems(
-      'preset',
-      defaultPresets,
-      babelOptions.presets
-    );
-
-    // Merge babelrc & our plugins together
-    babelOptions.plugins = mergeConfigItems(
-      'plugin',
-      defaultPlugins,
-      babelOptions.plugins || []
-    );
-
-    return babelOptions;
-  },
-}));
 
 async function buildAction() {
   const opts = await normalizeOpts(parseArgs());
@@ -256,41 +201,6 @@ async function buildAction() {
 buildAction();
 
 ////////////////////////////////////////////////////////////////////////////////
-
-function createConfigItems(type: any, items: any[]) {
-  return items.map(({ name, ...options }) => {
-    return createConfigItem([require.resolve(name), options], { type });
-  });
-}
-
-function mergeConfigItems(type: any, ...configItemsToMerge: any[]) {
-  const mergedItems: any[] = [];
-
-  configItemsToMerge.forEach((configItemToMerge) => {
-    configItemToMerge.forEach((item: any) => {
-      const itemToMergeWithIndex = mergedItems.findIndex(
-        (mergedItem) => mergedItem.file.resolved === item.file.resolved
-      );
-
-      if (itemToMergeWithIndex === -1) {
-        mergedItems.push(item);
-        return;
-      }
-
-      mergedItems[itemToMergeWithIndex] = createConfigItem(
-        [
-          mergedItems[itemToMergeWithIndex].file.resolved,
-          merge(mergedItems[itemToMergeWithIndex].options, item.options),
-        ],
-        {
-          type,
-        }
-      );
-    });
-  });
-
-  return mergedItems;
-}
 
 export function writeCjsEntryFile(name: string) {
   const contents = `'use strict';

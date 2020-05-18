@@ -1,4 +1,9 @@
-import { unitLess, unit, parseUnit, getCSSLengthConverter } from '../src/index';
+import {
+  unitLess,
+  unit,
+  parseUnit,
+  getCSSLengthConverter,
+} from 'harmonious-utils';
 
 describe('getCSSLengthConverter', () => {
   it('should pass', () => {
