@@ -6,7 +6,7 @@ const projectRoot = path.resolve(__dirname, '../');
 export const paths = {
   projectRoot,
   packagePackageJson: resolveApp('package.json'),
-  packageTsconfigBuildJson: resolveApp('tsconfig.build.json'),
+  packageTsconfigBuildJson: resolveApp('tsconfig.base.json'),
   testsSetup: path.join(projectRoot, 'test/setupTests.ts'),
   packageRoot: resolveApp('.'),
   packageDist: resolveApp('dist'),
