@@ -33,4 +33,13 @@ Typography is a great library. I've used it on various projects over the years a
 - Could we componentize layout elements? I have some rough ideas here but am excited to explore.
 - Would love to explore [fluid typography](https://css-tricks.com/snippets/css/fluid-typography/) as a simple opt-in feature.
 
-At the moment, I haven't done much other than copy a lot of Typography's code, remove a lot of the stuff I don't want, and restructure the core tools as classes (I know, everyone hates classes now blah blah blah). This is very much in an exploratory phase and I will be updating the APIs and features rapidly for the next few weeks. If you ever had any cool ideas you wanted to see in Typography, feel free to open an issue here and let's explore together!
+This is very much in an exploratory phase and I will be updating the APIs and features rapidly for the next few weeks. If you ever had any cool ideas you wanted to see in Typography, feel free to open an issue here and let's explore together!
+
+TODOS:
+- [X] ~~*Add support for breakpoint calculations*~~ [2020-05-17]
+- [X] ~~*Remove most styles unrelated to spacing/scaling*~~ [2020-05-17]
+- [X] ~~*Test output as CSS-in-JS and CSS*~~ [2020-05-17]
+- [ ] Use in a project and identify shortcomings
+- [ ] Revisit plugins and themes
+- [ ] Explore fluid typography
+- [ ] Explore component exports in `harmonious-react`
