@@ -46,6 +46,7 @@
     "cross-env": "^7.0.2",
     "execa": "^4.0.1",
     "fs-extra": "^9.0.0",
+    "get-workspaces": "^1.0.2",
     "husky": "^4.2.5",
     "jest": "^26.0.1",
     "jest-watch-typeahead": "^0.6.0",
