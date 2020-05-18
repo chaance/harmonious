@@ -46,7 +46,7 @@ export async function createRollupConfig(
   let tsconfig: string | undefined;
   let tsconfigJSON;
   try {
-    tsconfig = opts.tsconfig || paths.packageTsconfigBuildJson;
+    tsconfig = opts.tsconfig || path.join(paths.projectRoot, 'tsconfig.json');
     tsconfigJSON = await fs.readJSON(tsconfig);
   } catch (e) {
     tsconfig = undefined;
@@ -117,27 +117,25 @@ export async function createRollupConfig(
         tsconfig,
         tsconfigDefaults: {
           exclude: [
-            // all TS test files, regardless whether co-located or in test/ etc
             '**/*.spec.ts',
             '**/*.test.ts',
             '**/*.spec.tsx',
             '**/*.test.tsx',
-            // TS defaults below
             'node_modules',
             'bower_components',
             'jspm_packages',
             paths.packageDist,
           ],
-          compilerOptions: {
-            sourceMap: true,
-            declaration: true,
-            jsx: 'react',
-          },
         },
         tsconfigOverride: {
+          allowJs: true,
+          include: [
+            path.resolve(paths.packageRoot, 'src'),
+            path.resolve(paths.packageRoot, 'types'),
+            path.resolve(paths.projectRoot, 'types'),
+          ],
           compilerOptions: {
-            // TS -> esnext, then leave the rest to babel-preset-env
-            target: 'esnext',
+            outDir: paths.packageDist,
           },
         },
         check: !opts.transpileOnly,
