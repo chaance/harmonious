@@ -22,7 +22,7 @@
 
 ---
 
-Hello! If you are reading this, I assume you're curious as to why I appear to be creating a library that essentially does the same thing as another popular library, even using much of the same code. At least, you would probably be wondering that if you are familiar with Typography.js.
+Hello! If you are reading this, I assume you're curious as to why I appear to be creating a library that essentially does the same thing as another popular library, even using much of the same code. At least, you would probably be wondering that if you are familiar with `Typography.js`.
 
 Typography is a great library. I've used it on various projects over the years and would use it again today. At the same time, there are some things I'd like it to do a little differently:
 
