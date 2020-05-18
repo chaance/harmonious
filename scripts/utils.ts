@@ -15,7 +15,7 @@ export function external(id: string) {
 
 // Make sure any symlinks in the project folder are resolved:
 // https://github.com/facebookincubator/create-react-app/issues/637
-export const appDirectory = path.resolve(__dirname, '../');
+export const appDirectory = fs.realpathSync(process.cwd());
 export function resolveApp(relativePath: string) {
   return path.resolve(appDirectory, relativePath);
 }
