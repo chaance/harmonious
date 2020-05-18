@@ -13,14 +13,19 @@
     "build": "lerna run build --stream",
     "test": "cross-env CI=true ts-node ./scripts/test packages",
     "ver": "lerna version --no-push",
-    "pub": "lerna publish"
+    "changeset": "changeset",
+    "prerelease": "yarn build && yarn test",
+    "release": "changeset publish"
   },
   "devDependencies": {
+    "@actions/exec": "^1.0.4",
     "@babel/core": "^7.9.6",
     "@babel/plugin-proposal-class-properties": "^7.8.3",
     "@babel/plugin-proposal-optional-chaining": "^7.9.0",
     "@babel/plugin-proposal-nullish-coalescing-operator": "^7.8.3",
     "@babel/preset-env": "^7.9.6",
+    "@changesets/changelog-github": "^0.2.6",
+    "@changesets/cli": "^2.7.1",
     "@rollup/plugin-commonjs": "^11.1.0",
     "@rollup/plugin-json": "^4.0.3",
     "@rollup/plugin-replace": "^2.3.2",

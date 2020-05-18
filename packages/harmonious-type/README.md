@@ -43,3 +43,7 @@ TODOS:
 - [ ] Revisit plugins and themes
 - [ ] Explore fluid typography
 - [ ] Explore component exports in `harmonious-react`
+
+BUILD TODOS:
+- Use babel for tests
+- Configure test build to allow testing either source files (for development) or bundles
