@@ -1,6 +1,6 @@
 {
   "name": "harmonious-type",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Create styles based on harmonious relationships between typographic elements.",
   "author": "Chance Strickland <hi@chancedigital.io>",
   "license": "MIT",
@@ -20,8 +20,8 @@
   },
   "dependencies": {
     "csstype": "^2.6.10",
-    "harmonious-rhythm": "^0.0.3",
-    "harmonious-utils": "^0.0.3",
+    "harmonious-rhythm": "^0.0.4",
+    "harmonious-utils": "^0.0.4",
     "lodash": "^4.17.15",
     "postcss-js": "^2.0.3",
     "tslib": "^1.11.2"
