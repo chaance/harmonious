@@ -5,7 +5,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/chancestrickland/harmonious-type.git",
+    "url": "git+https://github.com/chancestrickland/harmonious.git",
     "directory": "packages/harmonious-scale"
   },
   "private": true,

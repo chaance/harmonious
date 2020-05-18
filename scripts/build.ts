@@ -51,6 +51,13 @@ export async function createRollupConfig(
     tsconfig = undefined;
   }
 
+  // console.log('👉' + opts.name, [
+  //   path.resolve(paths.packageRoot, 'src'),
+  //   path.resolve(paths.packageRoot, 'types'),
+  //   path.resolve(paths.projectRoot, 'types'),
+  //   paths.packageDist,
+  // ]);
+
   return {
     // Tell Rollup the entry point to the package
     input: opts.input,
