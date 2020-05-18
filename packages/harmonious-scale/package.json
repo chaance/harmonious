@@ -1,6 +1,6 @@
 {
   "name": "harmonious-scale",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Calculate harmonious modular scaling values based on ratios from from http://www.modularscale.com",
   "author": "Chance Strickland <hi@chancedigital.io>",
   "license": "MIT",
@@ -21,7 +21,7 @@
     "lint": "tsdx lint"
   },
   "dependencies": {
-    "harmonious-utils": "0.0.1",
+    "harmonious-utils": "^0.0.2",
     "lodash": "^4.17.15",
     "tslib": "^1.11.2"
   },
