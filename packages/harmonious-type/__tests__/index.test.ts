@@ -3,6 +3,8 @@ import { HarmoniousType } from '../src';
 import fs from 'fs';
 import path from 'path';
 import prettier from 'prettier';
+import postcss from 'postcss';
+import postcssJs from 'postcss-js';
 
 describe('harmonious-type', () => {
   it('should return an object with all documented members', () => {
@@ -49,7 +51,7 @@ describe('HarmoniousType.scale', () => {
 });
 
 describe('HarmoniousType.toJSON', () => {
-  it('should return CSS as JSON', () => {
+  it('should return CSS as JSON', async () => {
     let json = new HarmoniousType({
       breakpoints: {
         600: {
@@ -69,9 +71,15 @@ describe('HarmoniousType.toJSON', () => {
     // TODO: Use snapshot tests after stable is released
     // expect(json).toMatchSnapshot();
 
+    // We want the JSON to resolve to valid CSS-in-JS syntax, parsable by
+    // PostCSS. We may want to consider using PostCSS in the tool directly
+    // though that might be unecessary.
+    let { css } = await postcss().process(json, { parser: postcssJs });
+    expect(typeof css).toBe('string');
+
     // Write a file we can manually inspect if we have any funky issues
     // This should also catch basic syntax errors
-    expect(() => {
+    expect(async () => {
       fs.writeFile(
         path.resolve(__dirname, './test-output.json'),
         prettier.format(JSON.stringify(json), { parser: 'json' }),

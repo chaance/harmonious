@@ -11,7 +11,8 @@
   "private": true,
   "scripts": {
     "build": "lerna run build --stream",
-    "test": "cross-env CI=true ts-node ./scripts/test packages"
+    "test": "cross-env CI=true ts-node ./scripts/test packages",
+    "ver": "lerna version --no-push"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^5.7.0",
@@ -19,6 +20,7 @@
     "@types/lodash": "^4.14.150",
     "@types/mri": "^1.1.0",
     "@types/prettier": "^2.0.0",
+    "@types/postcss-js": "^2.0.0",
     "cross-env": "^7.0.2",
     "husky": "^4.2.5",
     "lerna": "^3.20.2",
