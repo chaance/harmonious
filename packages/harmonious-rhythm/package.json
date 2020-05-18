@@ -1,6 +1,6 @@
 {
   "name": "harmonious-rhythm",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Create a harmonious vertical rhythm between all elements on a page.",
   "author": "Chance Strickland <hi@chancedigital.io>",
   "license": "MIT",
@@ -19,8 +19,8 @@
     "size": "size-limit"
   },
   "dependencies": {
-    "harmonious-scale": "^0.0.2",
-    "harmonious-utils": "^0.0.2",
+    "harmonious-scale": "^0.0.3",
+    "harmonious-utils": "^0.0.3",
     "lodash": "^4.17.15",
     "tslib": "^1.11.2"
   },
