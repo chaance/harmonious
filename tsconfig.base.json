@@ -8,7 +8,6 @@
     "esModuleInterop": true,
     "experimentalDecorators": false,
     "importHelpers": true,
-    "jsx": "react",
     "lib": ["dom", "esnext"],
     "moduleResolution": "node",
     "noFallthroughCasesInSwitch": false,

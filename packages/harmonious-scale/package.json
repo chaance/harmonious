@@ -12,11 +12,13 @@
   "scripts": {
     "test": "cross-env CI=true ts-node ../../scripts/test",
     "test:watch": "npm run test -- --watchAll",
+    "start": "cross-env NODE_ENV=development tsdx watch --verbose",
     "dev": "yarn start",
     "prebuild": "rimraf dist",
-    "build": "ts-node ../../scripts/build",
+    "build": "cross-env NODE_ENV=production tsdx build --format=cjs,esm,umd",
     "prepublish": "npm run build",
-    "size": "size-limit"
+    "size": "size-limit",
+    "lint": "tsdx lint"
   },
   "dependencies": {
     "harmonious-utils": "^0.0.2",
