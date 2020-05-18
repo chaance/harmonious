@@ -24,7 +24,7 @@
     "harmonious-utils": "^0.0.6",
     "lodash": "^4.17.15",
     "postcss-js": "^2.0.3",
-    "tslib": "^1.11.2"
+    "tslib": "^2.0.0"
   },
   "main": "dist/index.js",
   "module": "dist/harmonious-type.esm.js",
