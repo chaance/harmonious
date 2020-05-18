@@ -19,7 +19,7 @@
     "size": "size-limit"
   },
   "dependencies": {
-    "tslib": "^1.11.2"
+    "tslib": "^2.0.0"
   },
   "main": "dist/index.js",
   "module": "dist/harmonious-utils.esm.js",
