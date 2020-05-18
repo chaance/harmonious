@@ -1,5 +1,5 @@
 const { exec } = require('@actions/exec');
-const getWorkspaces = require('get-workspaces').default;
+const { getPackages } = require('@manypkg/get-packages');
 
 async function execWithOutput(command, args, options) {
   let myOutput = '';
@@ -47,10 +47,10 @@ const publishablePackages = [
 
   await exec('git', ['reset', '--mixed', 'HEAD~1']);
 
-  const workspaces = await getWorkspaces();
+  const { packages } = await getPackages(process.cwd());
 
-  for (let workspace of workspaces) {
-    if (publishablePackages.includes(workspace.name)) {
+  for (let workspace of packages) {
+    if (publishablePackages.includes(workspace.packageJson.name)) {
       continue;
     }
     await exec('git', ['checkout', '--', workspace.dir]);
