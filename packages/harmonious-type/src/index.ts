@@ -388,7 +388,14 @@ export class HarmoniousType {
     Object.keys(styles)
       .sort((a, b) => {
         if (a.startsWith('@') && b.startsWith('@')) {
-          return a > b ? -1 : a < b ? 1 : 0;
+          // Sort queries from smallest to largest
+          let queryValueA = parseInt(a.match(/\d+/g)?.[0] || '', 10);
+          let queryValueB = parseInt(a.match(/\d+/g)?.[0] || '', 10);
+          return queryValueA > queryValueB
+            ? -1
+            : queryValueA < queryValueB
+            ? 1
+            : 0;
         }
         if (a.startsWith('@')) {
           return 1;
