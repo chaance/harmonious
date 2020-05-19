@@ -1,93 +1,121 @@
-import { createConfigItem } from '@babel/core';
+import { createConfigItem, ConfigItem, TransformOptions } from '@babel/core';
 import { merge } from 'lodash';
-import babelPlugin from 'rollup-plugin-babel';
 
-export const plugin = babelPlugin.custom(() => ({
-  // Passed the plugin options.
-  options({ custom: customOptions, ...pluginOptions }: any) {
-    return {
-      // Pull out any custom options that the plugin might have.
-      customOptions,
+type Opts = Omit<TransformOptions, 'presets' | 'plugins'> & {
+  cacheConfigItems?: boolean;
+  presets?: ConfigItem[];
+  plugins?: ConfigItem[];
+  targets?: any;
+};
 
-      // Pass the options back with the two custom options removed.
-      pluginOptions,
-    };
-  },
-  config(config: any, { customOptions }: any) {
-    const defaultPlugins = createConfigItems('plugin', [
-      { name: 'babel-plugin-annotate-pure-calls' },
-      { name: 'babel-plugin-dev-expression' },
-      {
-        name: '@babel/plugin-proposal-class-properties',
-        loose: true,
-      },
-      { name: '@babel/plugin-proposal-optional-chaining' },
-      { name: '@babel/plugin-proposal-nullish-coalescing-operator' },
-      { name: 'babel-plugin-macros' },
-    ]);
+export function getBabelConfig(options: Opts = {}): TransformOptions {
+  const {
+    cacheConfigItems = false,
+    presets: presetOverrides = [],
+    plugins: pluginOverrides = [],
+    targets = undefined,
+    exclude = [],
+    ...rest
+  } = options;
 
-    const babelOptions = config.options || {};
-    babelOptions.presets = babelOptions.presets || [];
+  let defaultPlugins = createConfigItems('plugin', [
+    { name: 'babel-plugin-annotate-pure-calls' },
+    { name: 'babel-plugin-dev-expression' },
+    {
+      name: '@babel/plugin-proposal-class-properties',
+      loose: true,
+    },
+    { name: '@babel/plugin-proposal-optional-chaining' },
+    { name: '@babel/plugin-proposal-nullish-coalescing-operator' },
+    { name: 'babel-plugin-macros' },
+  ]);
 
-    const defaultPresets = createConfigItems('preset', [
-      {
-        name: '@babel/preset-env',
-        targets: customOptions.targets,
-        modules: false,
-        loose: true,
-        exclude: ['transform-async-to-generator', 'transform-regenerator'],
-      },
-    ]);
+  let defaultPresets = createConfigItems('preset', [
+    {
+      name: '@babel/preset-env',
+      targets,
+      modules: false,
+      loose: true,
+      exclude: ['transform-async-to-generator', 'transform-regenerator'],
+    },
+  ]);
 
-    babelOptions.presets = mergeConfigItems(
-      'preset',
-      defaultPresets,
-      babelOptions.presets || []
-    );
+  let presets = [
+    ...presetOverrides,
+    {
+      name: '@babel/preset-env',
+      targets,
+      modules: false,
+      loose: true,
+      exclude: ['transform-async-to-generator', 'transform-regenerator'],
+    },
+  ];
 
-    // Merge babelrc & our plugins together
-    babelOptions.plugins = mergeConfigItems(
-      'plugin',
-      defaultPlugins,
-      babelOptions.plugins || []
-    );
+  let plugins = [
+    ...pluginOverrides,
+    { name: 'babel-plugin-annotate-pure-calls' },
+    { name: 'babel-plugin-dev-expression' },
+    {
+      name: '@babel/plugin-proposal-class-properties',
+      loose: true,
+    },
+    { name: '@babel/plugin-proposal-optional-chaining' },
+    { name: '@babel/plugin-proposal-nullish-coalescing-operator' },
+    { name: 'babel-plugin-macros' },
+  ];
 
-    return babelOptions;
-  },
-}));
+  if (cacheConfigItems) {
+    presets = mergeConfigItems('preset', ...defaultPresets, ...presetOverrides);
+    plugins = mergeConfigItems('plugin', ...defaultPlugins, ...pluginOverrides);
+  }
 
-export default plugin;
+  return {
+    ...rest,
+    exclude: [
+      ...(Array.isArray(exclude) ? exclude : [exclude]),
+      'node_modules/**',
+    ],
+    presets,
+    plugins,
+  };
+}
 
-function createConfigItems(type: any, items: any[]) {
+export default getBabelConfig();
+
+function createConfigItems(
+  type: 'plugin' | 'preset',
+  items: Record<string, any>[]
+) {
   return items.map(({ name, ...options }) => {
-    return createConfigItem([require.resolve(name), options], { type });
+    return createConfigItem([require.resolve(name!), options], { type });
   });
 }
 
-function mergeConfigItems(type: any, ...configItemsToMerge: any[]) {
-  const mergedItems: any[] = [];
+function mergeConfigItems(
+  type: 'plugin' | 'preset',
+  ...configItemsToMerge: ConfigItem[]
+) {
+  const mergedItems: ConfigItem[] = [];
 
-  configItemsToMerge.forEach((configItemToMerge) => {
-    configItemToMerge.forEach((item: any) => {
-      const itemToMergeWithIndex = mergedItems.findIndex(
-        (mergedItem) => mergedItem.file.resolved === item.file.resolved
-      );
+  configItemsToMerge.forEach((item) => {
+    const itemToMergeWithIndex = mergedItems.findIndex(
+      (mergedItem) => mergedItem.file?.resolved === item.file?.resolved
+    );
 
-      if (itemToMergeWithIndex === -1) {
-        mergedItems.push(item);
-        return;
+    if (itemToMergeWithIndex === -1) {
+      mergedItems.push(item);
+      return;
+    }
+
+    mergedItems[itemToMergeWithIndex] = createConfigItem(
+      [
+        mergedItems[itemToMergeWithIndex].file?.resolved,
+        merge(mergedItems[itemToMergeWithIndex].options, item.options),
+      ],
+      {
+        type,
       }
-
-      mergedItems[itemToMergeWithIndex] = createConfigItem(
-        [
-          mergedItems[itemToMergeWithIndex].file.resolved,
-          merge(mergedItems[itemToMergeWithIndex].options, item.options),
-        ],
-        {
-          type,
-        }
-      );
-    });
+    );
   });
 
   return mergedItems;

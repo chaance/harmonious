@@ -19,7 +19,8 @@ import {
   parseArgs,
 } from './utils';
 import { ScriptOpts, NormalizedOpts } from './types';
-import babelPlugin from './config/babel';
+import babel from '@rollup/plugin-babel';
+import { getBabelConfig } from './config/babel';
 import * as fs from 'fs-extra';
 
 // shebang cache map thing because the transform only gets run once
@@ -152,14 +153,14 @@ export async function createRollupConfig(
         },
         check: !opts.transpileOnly,
       }),
-      babelPlugin({
-        exclude: 'node_modules/**',
+      babel({
+        babelHelpers: 'bundled',
         extensions: [...DEFAULT_EXTENSIONS, 'ts', 'tsx'],
         passPerPreset: true,
-        custom: {
+        ...getBabelConfig({
           targets: opts.target === 'node' ? { node: '8' } : undefined,
-          format: opts.format,
-        },
+          cacheConfigItems: true,
+        }),
       }),
       opts.env !== undefined &&
         replace({
