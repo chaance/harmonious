@@ -2,19 +2,23 @@
 import chalk from 'chalk';
 import execa from 'execa';
 import ora from 'ora';
-import { watch, RollupWatchOptions, WatcherOptions } from 'rollup';
 import {
-  clearConsole,
-  normalizeOpts,
+  RollupWatchOptions,
+  watch as rollupWatch,
+  WatcherOptions,
+} from 'rollup';
+import {
   cleanDistFolder,
+  clearConsole,
   getInputs,
-  logError,
-  parseArgs,
   getPackageName,
+  logError,
+  normalizeOpts,
+  parseArgs,
 } from './utils';
 import { createBuildConfigs, writeCjsEntryFile } from './build';
 
-async function watchAction() {
+async function watch() {
   const opts = await normalizeOpts(parseArgs());
   const buildConfigs = await createBuildConfigs(opts);
   if (!opts.noClean) {
@@ -51,7 +55,7 @@ async function watchAction() {
 
   const spinner = ora().start();
 
-  watch(
+  rollupWatch(
     (buildConfigs as RollupWatchOptions[]).map((inputOptions) => ({
       watch: {
         silent: true,
@@ -91,4 +95,4 @@ ${chalk.dim('Watching for changes')}
   });
 }
 
-watchAction();
+watch();

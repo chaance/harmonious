@@ -1,4 +1,4 @@
-import { DEFAULT_EXTENSIONS, createConfigItem } from '@babel/core';
+import { createConfigItem } from '@babel/core';
 import { merge } from 'lodash';
 import babelPlugin from 'rollup-plugin-babel';
 
@@ -42,7 +42,7 @@ export const plugin = babelPlugin.custom(() => ({
     babelOptions.presets = mergeConfigItems(
       'preset',
       defaultPresets,
-      babelOptions.presets
+      babelOptions.presets || []
     );
 
     // Merge babelrc & our plugins together

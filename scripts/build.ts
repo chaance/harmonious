@@ -4,7 +4,6 @@ import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import replace from '@rollup/plugin-replace';
 import resolve from '@rollup/plugin-node-resolve';
-import asyncro from 'asyncro';
 import path from 'path';
 import { rollup, RollupOptions, OutputOptions } from 'rollup';
 import sourceMaps from 'rollup-plugin-sourcemaps';
@@ -27,7 +26,8 @@ import * as fs from 'fs-extra';
 let shebang: any = {};
 
 export async function createRollupConfig(
-  opts: ScriptOpts
+  opts: ScriptOpts,
+  buildCount: number
 ): Promise<RollupOptions> {
   const shouldMinify =
     opts.minify !== undefined ? opts.minify : opts.env === 'production';
@@ -142,6 +142,12 @@ export async function createRollupConfig(
           ],
           compilerOptions: {
             outDir: paths.packageDist,
+
+            // We run multiple builds for each package, but we only need to
+            // output type declarations once.
+            ...(buildCount > 0
+              ? { declaration: false, declarationMap: false }
+              : {}),
           },
         },
         check: !opts.transpileOnly,
@@ -177,7 +183,7 @@ export async function createRollupConfig(
   };
 }
 
-async function buildAction() {
+async function build() {
   const opts = await normalizeOpts(parseArgs());
   const buildConfigs = await createBuildConfigs(opts);
 
@@ -189,14 +195,12 @@ async function buildAction() {
   logger(promise, 'Creating entry file');
 
   try {
-    const promise = asyncro
-      .map(buildConfigs, async (inputOptions: RollupOptions) => {
+    const promise = Promise.all(
+      buildConfigs.map(async (inputOptions) => {
         let bundle = await rollup(inputOptions);
         await bundle.write(inputOptions.output as OutputOptions);
       })
-      .catch((e: any) => {
-        throw e;
-      });
+    );
     logger(promise, 'Building modules');
     await promise;
 
@@ -206,28 +210,14 @@ async function buildAction() {
     // the bundled code, which we don't want. Unclear exactly why, but this
     // script moves it back after rollup is done.
     // https://github.com/ezolenko/rollup-plugin-typescript2/issues/136
-    let declarationFile = path.resolve(
-      paths.packageDist,
-      `${opts.name}/src/index.d.ts`
-    );
-    if (fs.existsSync(declarationFile)) {
-      try {
-        await fs.move(
-          declarationFile,
-          path.resolve(paths.packageDist, 'index.d.ts')
-        );
-        await cleanEmptyFoldersRecursively(path.resolve(paths.packageDist));
-      } catch (e) {
-        console.error(e);
-      }
-    }
+    await moveDeclarationFileToDistRoot(opts.name);
   } catch (error) {
     logError(error);
     process.exit(1);
   }
 }
 
-buildAction();
+build();
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -255,8 +245,8 @@ export async function createBuildConfigs(
   );
 
   return await Promise.all(
-    allInputs.map(async (options: ScriptOpts) => {
-      return await createRollupConfig(options);
+    allInputs.map(async (options: ScriptOpts, index) => {
+      return await createRollupConfig(options, index);
     })
   );
 }
@@ -278,31 +268,11 @@ function createAllFormats(
       env: 'production',
       input,
     },
-    { ...opts, format: 'esm', input },
-    // {
-    //   ...opts,
-    //   format: "umd",
-    //   env: "development",
-    //   input,
-    // },
-    // {
-    //   ...opts,
-    //   format: "umd",
-    //   env: "production",
-    //   input,
-    // },
-    // {
-    //   ...opts,
-    //   format: "system",
-    //   env: "development",
-    //   input,
-    // },
-    // {
-    //   ...opts,
-    //   format: "system",
-    //   env: "production",
-    //   input,
-    // },
+    {
+      ...opts,
+      format: 'esm',
+      input,
+    },
   ].filter(Boolean) as [ScriptOpts, ...ScriptOpts[]];
 }
 
@@ -323,5 +293,21 @@ async function cleanEmptyFoldersRecursively(dir: string) {
 
   if (!fileNames.length) {
     await fs.rmdir(dir);
+  }
+}
+
+async function moveDeclarationFileToDistRoot(packageName: string) {
+  let misplacedDeclarationFile = path.resolve(
+    paths.packageDist,
+    `${packageName}/src/index.d.ts`
+  );
+  if (fs.existsSync(misplacedDeclarationFile)) {
+    await fs.move(
+      misplacedDeclarationFile,
+      path.resolve(paths.packageDist, 'index.d.ts')
+    );
+
+    // Clean up any empty directories left behind
+    await cleanEmptyFoldersRecursively(path.resolve(paths.packageDist));
   }
 }
