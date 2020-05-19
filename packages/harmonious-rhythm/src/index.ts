@@ -14,7 +14,6 @@ export const defaultConfig: Omit<
 > = {
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
   baseLineHeight: 1.5,
-  defaultRhythmBorderStyle: 'solid',
   defaultRhythmBorderWidth: 1,
   minLinePadding: 2,
   rhythmUnit: 'rem',
@@ -23,7 +22,8 @@ export const defaultConfig: Omit<
 };
 
 /**
- * Create a harmonious vertical rhythm from a provided `baseFontSize` and `baseLineHeight`.
+ * Create a harmonious vertical rhythm from a provided `baseFontSize` and
+ * `baseLineHeight`.
  *
  * Based largely on functions from the Compass Vertical Rhythm utility.
  *
@@ -41,7 +41,9 @@ export class HarmoniousRhythm {
   private readonly config: HarmoniousRhythmConfig;
 
   /**
-   * Unit conversion method based on the base font size.
+   * Convert from one unit to another given a base font size for relativity.
+   * @example
+   * rhythm.convert('18px', 'rem', '16px') === '1.125rem'
    *
    * @type {CSSUnitConverter}
    * @memberof HarmoniousRhythm
@@ -49,8 +51,8 @@ export class HarmoniousRhythm {
   public readonly convert: CSSUnitConverter;
 
   /**
-   * The default font size for all text in pixels.
-   * Derived from the config object.
+   * The default font size for all text in pixels. Derived from the config
+   * object.
    *
    * @private
    * @type {number}
@@ -58,6 +60,11 @@ export class HarmoniousRhythm {
    */
   public readonly baseFontSize: number;
 
+  /**
+   * Class constructor.
+   *
+   * @param options
+   */
   public constructor(options?: Partial<HarmoniousRhythmOptions>) {
     const [config, convert] = getConfig(options);
     this.config = config;
@@ -107,6 +114,11 @@ export class HarmoniousRhythm {
     );
   }
 
+  /**
+   *
+   *
+   * @param value
+   */
   public scale(value: number = 0) {
     const { baseFontSize, scaleRatio } = this.config;
     // This doesn't pick the right scale ratio if a theme has more than one ratio.
@@ -149,6 +161,11 @@ export class HarmoniousRhythm {
     };
   }
 
+  /**
+   * TODO: Docblock this
+   *
+   * @param fontSize
+   */
   public linesForFontSize(fontSize: string | number) {
     const {
       convert,
@@ -171,6 +188,13 @@ export class HarmoniousRhythm {
     return lines;
   }
 
+  /**
+   * TODO: Docblock this
+   *
+   * @param toSize
+   * @param lines
+   * @param fromSize
+   */
   public adjustFontSizeTo(
     toSize: string | number,
     lines: number | 'auto' = 'auto',
@@ -207,6 +231,7 @@ export class HarmoniousRhythm {
   }
 
   /**
+   * TODO: Docblock this
    *
    * @param value
    * @param baseFontSize
@@ -234,7 +259,6 @@ export class HarmoniousRhythm {
 export default HarmoniousRhythm;
 
 /**
- * Merge user options with our default to get a reliable config.
  * @param options
  */
 function getConfig(options: Partial<HarmoniousRhythmOptions> = defaultConfig) {
@@ -287,26 +311,40 @@ function getConfig(options: Partial<HarmoniousRhythmOptions> = defaultConfig) {
   ] as const;
 }
 
-type BorderStyle =
-  | 'dashed'
-  | 'dotted'
-  | 'double'
-  | 'groove'
-  | 'hidden'
-  | 'inset'
-  | 'none'
-  | 'outset'
-  | 'ridge'
-  | 'solid';
-
 export type HarmoniousRhythmOptions = {
+  /**
+   * The base font size in pixels, defaults to `16px`.
+   */
   baseFontSize: string | number;
+  /**
+   * The base line height value without a unit. Defaults to `1.5`.
+   */
   baseLineHeight: number;
-  defaultRhythmBorderStyle: BorderStyle;
+  /**
+   * The standard border size for most separator/block elements. Borders may
+   * factor in to rhythm calculations where possible. Defaults to `1px`.
+   */
   defaultRhythmBorderWidth: string | number;
+  /**
+   * The minimum amount of padding required between lines. Defaults to `2px`.
+   */
   minLinePadding: string | number;
+  /**
+   * The unit that will utlimately be used for calculated rhythm and scale
+   * values.
+   */
   rhythmUnit: 'px' | 'em' | 'rem';
+  /**
+   * Whether or not to round calculations to the nearest half-line of text.
+   * Defaults to `true`.
+   */
   roundToNearestHalfLine: boolean;
+  /**
+   * The “scale ratio”, or the the ratio between the `h1` font size and the
+   * `baseFontSize`. So if the scale ratio is `2` and the `baseFontSize` is
+   * `16px` then the `h1` font size is `32px`. Defaults to the "golden" ratio
+   * which is `1.61803398875`.
+   */
   scaleRatio?: number;
 };
 
@@ -314,7 +352,6 @@ export type HarmoniousRhythmConfig = {
   baseFontSize: number;
   baseLineHeight: number;
   baseLineHeightInPx: number;
-  defaultRhythmBorderStyle: BorderStyle;
   defaultRhythmBorderWidth: number;
   minLinePadding: number;
   rhythmUnit: 'px' | 'em' | 'rem';

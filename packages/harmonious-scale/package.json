@@ -19,7 +19,6 @@
     "size": "size-limit"
   },
   "dependencies": {
-    "harmonious-utils": "^0.0.6",
     "lodash": "^4.17.15",
     "tslib": "^2.0.0"
   },

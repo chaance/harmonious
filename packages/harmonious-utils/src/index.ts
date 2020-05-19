@@ -194,6 +194,12 @@ export function getDefiniteNumberWithFallback(
   return fallback;
 }
 
+/**
+ * @param length - The length you want to convert
+ * @param toUnit - The unit you want to convert the length to
+ * @param fromContext - The base unit used for calculating relative units
+ * @param toContext - The new base unit, if changed
+ */
 export type CSSUnitConverter = (
   length: string | number,
   toUnit: 'px' | 'em' | 'rem' | 'ex',

@@ -1,3 +1,8 @@
+// Not sure if we'll keep this utility since it's pretty much identical to the
+// original, but I did fix an incorrect ratio value that has had an open PR for
+// quite a while so 🤷‍♂️
+// https://github.com/KyleAMathews/modularscale/pull/4
+
 import isNumber from 'lodash/isNumber';
 
 export const ratios = {
@@ -36,7 +41,6 @@ export function harmoniousScale(
     }
     r = ratios.golden;
   }
-
   return Math.pow(r, value);
 }
 

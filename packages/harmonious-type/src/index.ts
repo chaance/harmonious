@@ -1,7 +1,6 @@
 import {
   HarmoniousRhythm,
   HarmoniousRhythmOptions,
-  HarmoniousRhythmConfig,
   defaultConfig as defaultRhythmConfig,
 } from 'harmonious-rhythm';
 import { ratios } from 'harmonious-scale';
@@ -632,12 +631,40 @@ function adjustFontSizeTo(
 }
 
 type BaseOptions = {
+  /**
+   * The title of the theme (currently not supported)
+   */
   title?: string;
+  /**
+   * The base font size in pixels, defaults to `16px`.
+   */
   baseFontSize?: HarmoniousRhythmOptions['baseFontSize'];
-  baseLineHeight?: HarmoniousRhythmOptions['baseLineHeight'];
-  headerLineHeight?: HarmoniousRhythmOptions['baseLineHeight'];
+  /**
+   * The base line height value without a unit. Defaults to `1.5`.
+   */
+  baseLineHeight?: number;
+  /**
+   * The line height value for heading elements. Defaults to `1.1`.
+   */
+  headerLineHeight?: number;
+  /**
+   * The unit that will utlimately be used for calculated rhythm and scale
+   * values.
+   */
   rhythmUnit?: HarmoniousRhythmOptions['rhythmUnit'];
+  /**
+   * The “scale ratio”, or the the ratio between the `h1` font size and the
+   * `baseFontSize`. So if the scale ratio is `2` and the `baseFontSize` is
+   * `16px` then the `h1` font size is `32px`. Defaults to the "golden" ratio
+   * which is `1.61803398875`.
+   */
   scaleRatio?: number;
+  /**
+   * The number of lines to be used as margins on block elements.
+   *
+   * TODO: Consider option for disabling this altogether. Could be useful in
+   * a component context to instead use this value for stack components.
+   */
   blockMarginBottom?: number;
 };
 
