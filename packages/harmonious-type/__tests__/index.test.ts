@@ -1,5 +1,5 @@
 import { isObject, isFunction } from 'lodash';
-import { HarmoniousType } from 'harmonious-type';
+import { HarmoniousType, HarmoniousTypePlugin } from 'harmonious-type';
 import fs from 'fs';
 import path from 'path';
 import prettier from 'prettier';
@@ -132,5 +132,46 @@ describe('HarmoniousType.toString', () => {
         () => void null
       );
     }).not.toThrow();
+  });
+});
+
+describe('HarmoniousType plugins', () => {
+  it('should be able to override styles', () => {
+    let plugin: HarmoniousTypePlugin = {
+      setStyles(rhythms, config, prevStyles) {
+        return {
+          ...prevStyles,
+          html: {
+            fontSize: '50px',
+          },
+        };
+      },
+    };
+    let json = new HarmoniousType({
+      plugins: [plugin],
+    }).toJSON();
+    expect(json.html.fontSize).toBe('50px');
+  });
+  it('should be able to override config', () => {
+    let plugin: HarmoniousTypePlugin = {
+      setConfig(prevConfig) {
+        return {
+          ...prevConfig,
+          breakpoints: {
+            ...prevConfig.breakpoints,
+            [0]: {
+              ...prevConfig.breakpoints[0],
+              baseFontSize: 50,
+            },
+          },
+        };
+      },
+    };
+    expect(
+      new HarmoniousType({
+        baseFontSize: 20,
+        plugins: [plugin],
+      }).baseFontSize
+    ).toBe(50);
   });
 });

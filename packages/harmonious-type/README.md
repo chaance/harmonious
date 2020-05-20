@@ -12,7 +12,6 @@
   Tools for painlessly creating harmonious topographic relationships.
 </h4>
 
-
 ```js
 const harmoniousType = new HarmoniousType({
   baseFontSize: 16,
@@ -60,27 +59,38 @@ Typography is a great library. I've used it on various projects over the years a
 This is very much in an exploratory phase and I will be updating the APIs and features rapidly for the next few weeks. If you ever had any cool ideas you wanted to see in Typography, feel free to open an issue here and let's explore together!
 
 I will also be exploring other interesting projects that solve similar problems:
--  [Raster](https://github.com/rsms/raster)
--  [Simple Modular Scale](https://github.com/jxnblk/simple-modular-scale)
+
+- [Raster](https://github.com/rsms/raster)
+- [Simple Modular Scale](https://github.com/jxnblk/simple-modular-scale)
 - [Typetura](https://typetura.com/)
 
 ---
 
 ## Current high-level status
 
-I have replicated the core functionality I wanted from Typography and scaled back its ambitions. Removed plugins, style overrides, and any options not related to scaling. I also added a top-level option for `breakpoints` that will override any of the other top-level settings as the screen scales.
+I have replicated the core functionality I wanted from Typography and scaled back its ambitions:
+
+- Removed style overrides, and any options not related to scaling
+- Added a top-level option for `breakpoints` that will override any of the other top-level settings as the screen scales.
+- Created plugins API that can allow users to override generated styles or core configuration options
 
 ## Core todos:
-- [X] ~~*Add support for breakpoint calculations*~~ [2020-05-17]
-- [X] ~~*Remove most styles unrelated to spacing/scaling*~~ [2020-05-17]
-- [X] ~~*Test output as CSS-in-JS and CSS*~~ [2020-05-17]
+
+- [x] ~~_Add support for breakpoint calculations_~~ [2020-05-17]
+- [x] ~~_Remove most styles unrelated to spacing/scaling_~~ [2020-05-17]
+- [x] ~~_Test output as CSS-in-JS and CSS_~~ [2020-05-17]
+- [ ] Use in a project and identify shortcomings (started)
+
+## Homework:
+
+- [ ] Explore rhythm units as design tokens
 - [ ] Explore non-pixel breakpoints (these can be problematic but I want to make sure I've got a solid argument for the restriction)
-- [ ] Use in a project and identify shortcomings
-- [ ] Revisit plugins and themes
 - [ ] Explore fluid typography
 - [ ] Explore component exports in `harmonious-react`
 - [ ] Write some docs when ideas are more fleshed out
+- [ ] Revisit ~~plugins and~~ themes
 
 ## Project housekeeping:
+
 - Use babel for tests
 - Configure test build to allow testing either source files (for development) or bundles

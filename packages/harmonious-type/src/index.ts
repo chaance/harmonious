@@ -98,22 +98,24 @@ export class HarmoniousType {
 
   public constructor(opts?: HarmoniousTypeOptions) {
     this.config = getConfig(opts);
-    this.rhythms = Object.keys(this.config.breakpoints).reduce((prev, cur) => {
+
+    const breakpoints: [0, ...number[]] = Object.keys(this.config.breakpoints)
+      .map((i) => parseInt(i, 10))
+      .filter((num) => !isNaN(num))
+      .sort() as any;
+
+    this.rhythms = breakpoints.reduce((prev, cur) => {
       return {
         ...prev,
         [cur]: new HarmoniousRhythm(
-          pick(this.config.breakpoints[cur as any], rhythmConfigKeys)
+          pick(this.config.breakpoints[cur], rhythmConfigKeys)
         ),
       };
     }, {}) as any;
 
     const baseRhythm = this.rhythms[0];
 
-    this.breakpoints = Object.keys(this.config.breakpoints)
-      .map((i) => parseInt(i, 10))
-      .filter((num) => !isNaN(num))
-      .sort() as any;
-
+    this.breakpoints = breakpoints;
     this.baseFontSize = baseRhythm.baseFontSize;
     this.convert = baseRhythm.convert;
     this.rhythm = baseRhythm.rhythm;
@@ -382,6 +384,16 @@ export class HarmoniousType {
       }));
     });
 
+    if (Array.isArray(config.plugins)) {
+      styles = config.plugins.reduce(
+        (acc, plugin) => ({
+          ...acc,
+          ...(plugin.setStyles?.(rhythms, config, acc) || {}),
+        }),
+        styles
+      );
+    }
+
     const cascadified: typeof styles = {};
 
     Object.keys(styles)
@@ -470,10 +482,19 @@ function getConfig(
       { 0: baseConfig }
     );
 
-  return {
+  const cfg: HarmoniousTypeConfig = {
     ...pick(opts, ['title', 'rhythmUnit', 'breakpointUnit']),
     breakpoints,
+    plugins: opts.plugins || [],
   };
+
+  return cfg.plugins.reduce(
+    (acc, plugin) => ({
+      ...acc,
+      ...(plugin.setConfig?.(acc) || {}),
+    }),
+    cfg
+  );
 
   function findBreakpointMatch(property: any, breakpoint: number): any {
     let p = property as keyof BaseOptions; // 💩
@@ -630,6 +651,9 @@ function adjustFontSizeTo(
   );
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Types
+
 type BaseOptions = {
   /**
    * The title of the theme (currently not supported)
@@ -671,6 +695,7 @@ type BaseOptions = {
 export type HarmoniousTypeOptions = BaseOptions & {
   breakpoints?: Record<string | number, BaseOptions>;
   breakpointUnit?: 'px' | 'rem';
+  plugins?: HarmoniousTypePlugin[];
 };
 
 type HarmoniousTypeConfigBase = {
@@ -689,6 +714,7 @@ export type HarmoniousTypeConfig = {
     0: HarmoniousTypeConfigBase;
     [key: number]: HarmoniousTypeConfigBase;
   };
+  plugins: HarmoniousTypePlugin[];
 };
 
 export type RhythmFunction = (
@@ -711,3 +737,15 @@ type FontSizeAdjustmentFunction = (
 ) => { fontSize: string | number; lineHeight: number };
 
 export type HarmoniousStyles = { [key: string]: CSS.Properties };
+
+export type HarmoniousTypePlugin = {
+  setConfig?(config: HarmoniousTypeConfig): HarmoniousTypeConfig;
+  setStyles?(
+    rhythms: {
+      [key: number]: HarmoniousRhythm;
+      0: HarmoniousRhythm;
+    },
+    config: HarmoniousTypeConfig,
+    styles: HarmoniousStyles
+  ): HarmoniousStyles;
+};
