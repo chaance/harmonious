@@ -1,6 +1,6 @@
 {
   "name": "harmonious-scale",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Calculate harmonious modular scaling values based on ratios from from http://www.modularscale.com",
   "author": "Chance Strickland <hi@chancedigital.io>",
   "license": "MIT",
