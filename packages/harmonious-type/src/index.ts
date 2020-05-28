@@ -4,13 +4,16 @@ import {
   defaultConfig as defaultRhythmConfig,
 } from 'harmonious-rhythm';
 import { ratios } from 'harmonious-scale';
-import { isNumber, isObject, isString, kebabCase, pick } from 'lodash';
+import { isNumber, isObject, kebabCase, pick } from 'lodash';
+import { Properties } from 'csstype';
 import * as CSS from 'csstype';
 import {
   CSSUnitConverter,
   getDefiniteNumberWithFallback,
   unit,
 } from 'harmonious-utils';
+import postcss from 'postcss';
+import postcssJs from 'postcss-js';
 
 const rhythmConfigKeys = Object.keys(defaultRhythmConfig);
 
@@ -56,10 +59,10 @@ export class HarmoniousType {
   /**
    * The breakpoints defined as an ascending array
    *
-   * @type {[0, ...number[]]}
+   * @type {Record<string, number>}
    * @memberof HarmoniousType
    */
-  public readonly breakpoints: [0, ...number[]];
+  public readonly breakpoints: Record<string, number>;
 
   public readonly rhythm: (
     lines?: number,
@@ -85,8 +88,8 @@ export class HarmoniousType {
   public readonly getLineHeightFromValue: (value: string | number) => number;
 
   public readonly rhythms: {
-    0: HarmoniousRhythm;
-    [key: number]: HarmoniousRhythm;
+    _base: HarmoniousRhythm;
+    [key: string]: HarmoniousRhythm;
   };
 
   public readonly scale: (
@@ -99,23 +102,27 @@ export class HarmoniousType {
   public constructor(opts?: HarmoniousTypeOptions) {
     this.config = getConfig(opts);
 
-    const breakpoints: [0, ...number[]] = Object.keys(this.config.breakpoints)
-      .map((i) => parseInt(i, 10))
-      .filter((num) => !isNaN(num))
-      .sort() as any;
+    this.rhythms = Object.keys(this.config.breakpoints).reduce(
+      (prev, cur) => {
+        return {
+          ...prev,
+          [cur]: new HarmoniousRhythm(
+            pick(this.config.breakpoints[cur], rhythmConfigKeys)
+          ),
+        };
+      },
+      { _base: new HarmoniousRhythm(pick(this.config, rhythmConfigKeys)) }
+    ) as any;
 
-    this.rhythms = breakpoints.reduce((prev, cur) => {
-      return {
+    const baseRhythm = this.rhythms._base;
+
+    this.breakpoints = Object.keys(this.config.breakpoints).reduce(
+      (prev, cur) => ({
         ...prev,
-        [cur]: new HarmoniousRhythm(
-          pick(this.config.breakpoints[cur], rhythmConfigKeys)
-        ),
-      };
-    }, {}) as any;
-
-    const baseRhythm = this.rhythms[0];
-
-    this.breakpoints = breakpoints;
+        [cur]: this.config.breakpoints[cur].width,
+      }),
+      {}
+    );
     this.baseFontSize = baseRhythm.baseFontSize;
     this.convert = baseRhythm.convert;
     this.rhythm = baseRhythm.rhythm;
@@ -394,33 +401,13 @@ export class HarmoniousType {
       );
     }
 
-    const cascadified: typeof styles = {};
+    const output: typeof styles = {};
 
-    Object.keys(styles)
-      .sort((a, b) => {
-        if (a.startsWith('@') && b.startsWith('@')) {
-          // Sort queries from smallest to largest
-          let queryValueA = parseInt(a.match(/\d+/g)?.[0] || '', 10);
-          let queryValueB = parseInt(a.match(/\d+/g)?.[0] || '', 10);
-          return queryValueA > queryValueB
-            ? -1
-            : queryValueA < queryValueB
-            ? 1
-            : 0;
-        }
-        if (a.startsWith('@')) {
-          return 1;
-        }
-        if (b.startsWith('@')) {
-          return -1;
-        }
-        return 0;
-      })
-      .forEach((key) => {
-        cascadified[key] = styles[key];
-      });
+    for (let key in sortStylesByMediaQueryLength(styles)) {
+      output[key] = styles[key];
+    }
 
-    return cascadified;
+    return output;
   }
 
   public toString() {
@@ -457,33 +444,32 @@ function getConfig(
   // We want to search our breakpoints in descending order to find the largest
   // value that is less than the value being searched for
   let breakpointKeys = Object.keys(opts.breakpoints)
-    .map((bp) => parseInt(bp, 10))
+    .map((bp) => parseInt((opts.breakpoints[bp] as any).width, 10))
     .filter((num) => !isNaN(num))
     .sort((a, b) => b - a);
 
   let breakpoints: HarmoniousTypeConfig['breakpoints'] = breakpointKeys
     .sort()
-    .reduce(
-      (prev, cur) => {
-        return {
-          ...prev,
-          [cur]: {
-            baseFontSize: getDefiniteNumberWithFallback(
-              findBreakpointMatch('baseFontSize', cur),
-              defaultConfig.baseFontSize
-            ),
-            baseLineHeight: findBreakpointMatch('baseLineHeight', cur),
-            headerLineHeight: findBreakpointMatch('headerLineHeight', cur),
-            scaleRatio: findBreakpointMatch('scaleRatio', cur),
-            blockMarginBottom: findBreakpointMatch('blockMarginBottom', cur),
-          },
-        };
-      },
-      { 0: baseConfig }
-    );
+    .reduce((prev, cur) => {
+      return {
+        ...prev,
+        [cur]: {
+          key: findBreakpointMatch('key', cur) as string,
+          baseFontSize: getDefiniteNumberWithFallback(
+            findBreakpointMatch('baseFontSize', cur),
+            defaultConfig.baseFontSize
+          ),
+          baseLineHeight: findBreakpointMatch('baseLineHeight', cur),
+          headerLineHeight: findBreakpointMatch('headerLineHeight', cur),
+          scaleRatio: findBreakpointMatch('scaleRatio', cur),
+          blockMarginBottom: findBreakpointMatch('blockMarginBottom', cur),
+        },
+      };
+    }, {});
 
   const cfg: HarmoniousTypeConfig = {
     ...pick(opts, ['title', 'rhythmUnit', 'breakpointUnit']),
+    ...baseConfig,
     breakpoints,
     plugins: opts.plugins || [],
   };
@@ -519,8 +505,8 @@ function getMediaQueryString(value: string | number) {
 function getStylesSetter(
   config: HarmoniousTypeConfig,
   rhythms: {
-    [key: number]: HarmoniousRhythm;
-    0: HarmoniousRhythm;
+    _base: HarmoniousRhythm;
+    [key: string]: HarmoniousRhythm;
   }
 ) {
   return function setStyles(
@@ -541,96 +527,113 @@ function getStylesSetter(
   ): HarmoniousStyles {
     let selector = Array.isArray(selectors) ? selectors.join(',') : selectors;
 
-    return Object.keys(rhythms).reduce((output, breakpoint) => {
-      let bp = parseInt(breakpoint, 10);
-      let hm = rhythms[bp];
-      let { fontSize, lineHeight } = hm.establishBaseline();
-      let { convert, rhythm, baseFontSize, scale } = hm;
-      let { blockMarginBottom: bmb, headerLineHeight } = config.breakpoints[bp];
-      let blockMarginBottom = '';
-      if (isNumber(bmb)) {
-        blockMarginBottom = rhythm(bmb);
-      } else if (unit(bmb)) {
-        blockMarginBottom = bmb as any;
-      } else {
-        blockMarginBottom = rhythm(1);
-      }
+    return (Array.isArray(selectors) ? selectors : selectors.split(',')).reduce(
+      (output, selector) => {
+        selector = selector.trim();
+        let rules: HarmoniousStyles = {};
 
-      hm.adjustFontSizeTo;
+        for (let b in rhythms) {
+          let breakpoint = b === '_base' ? 0 : config.breakpoints[b].width;
+          let hm = rhythms[b];
+          let { fontSize, lineHeight } = hm.establishBaseline();
+          let { convert, rhythm, baseFontSize, scale } = hm;
+          let { blockMarginBottom, headerLineHeight } = config.breakpoints[b];
+          let bmb = '';
+          if (isNumber(blockMarginBottom)) {
+            bmb = rhythm(blockMarginBottom);
+          } else if (unit(blockMarginBottom)) {
+            bmb = blockMarginBottom as any;
+          } else {
+            bmb = rhythm(1);
+          }
 
-      let scaledRules = responsiveRules
-        ? responsiveRules({
-            baseFontSize,
-            blockMarginBottom,
-            convert,
-            fontSize,
-            headerLineHeight,
-            lineHeight,
-            rhythm,
-            adjustFontSize: hm.adjustFontSizeTo,
-            scale,
-          })
-        : {};
+          let scaledRules = responsiveRules
+            ? responsiveRules({
+                baseFontSize,
+                blockMarginBottom: bmb,
+                convert,
+                fontSize,
+                headerLineHeight,
+                lineHeight,
+                rhythm,
+                adjustFontSize: hm.adjustFontSizeTo,
+                scale,
+              })
+            : {};
 
-      if (bp == 0) {
-        let rules = {
-          ...((output as any)[selector] || {}),
-          ...(baseRules || {}),
-          ...scaledRules,
-        };
+          if (breakpoint == 0) {
+            rules = {
+              ...((output as any)[selector] || {}),
+              ...rules,
+              ...(baseRules || {}),
+              ...scaledRules,
+            };
+          } else {
+            let querySelector = getMediaQueryString(breakpoint);
+            let maybeRules = {
+              ...((output as any)[selector]?.[querySelector] || {}),
+              ...scaledRules,
+            };
+            if (Object.keys(maybeRules).length) {
+              rules = {
+                ...((output as any)[selector] || {}),
+                ...rules,
+                [querySelector]: maybeRules,
+              };
+            }
+          }
+        }
+
         return Object.keys(rules).length
           ? {
               ...output,
-              [selector]: {
-                ...((output as any)[selector] || {}),
-                ...(baseRules || {}),
-                ...scaledRules,
-              },
+              [selector]: sortStylesByMediaQueryLength(rules),
             }
           : output;
-      }
-
-      let querySelector = getMediaQueryString(breakpoint);
-      let selectorRules = {
-        ...((output as any)[querySelector]?.[selector] || {}),
-        ...scaledRules,
-      };
-      let selectorStyles = Object.keys(selectorRules).length
-        ? { [selector]: selectorRules }
-        : {};
-      let queryStyles = {
-        ...((output as any)[querySelector] || {}),
-        ...selectorStyles,
-      };
-      return Object.keys(queryStyles).length
-        ? { ...output, [querySelector]: queryStyles }
-        : output;
-    }, styles);
+      },
+      styles
+    );
   };
 }
 
-function compileStyles(styles: HarmoniousStyles) {
-  return Object.entries(styles).reduce((stylesStr, [selector, ruleSet]) => {
-    stylesStr += `${selector}{`;
-    Object.entries(ruleSet).forEach(([property, value]) => {
-      if (isObject(value)) {
-        const newObject: any = {};
-        newObject[property] = value;
-        stylesStr += compileStyles(newObject);
-      } else {
-        let newStyle = `${kebabCase(property)}:${value};`;
-        // If the property is prefixed, add an additional dash at the beginning.
-        ['Webkit', 'ms', 'Moz', 'O'].forEach((prefix) => {
-          if (property.startsWith(prefix)) {
-            newStyle = `-${newStyle}`;
-          }
-        });
-        stylesStr += newStyle;
-      }
-    });
-    stylesStr += '}';
-    return stylesStr;
-  }, '');
+function compileStyles(styles: HarmoniousStyles): string {
+  let mediaQueries: HarmoniousStyles = {};
+  let compiled = Object.entries(styles).reduce(
+    (stylesStr, [selector, ruleSet]) => {
+      stylesStr += `${selector}{`;
+      Object.entries(ruleSet).forEach(([property, value]) => {
+        if (property.startsWith('@') && isObject(value)) {
+          mediaQueries[property] = {
+            ...(mediaQueries[property] || {}),
+            [selector]: {
+              ...((mediaQueries as any)[property]?.[selector] || {}),
+              ...value,
+            },
+          };
+        } else if (isObject(value)) {
+          const newObject: any = {};
+          newObject[property] = value;
+          stylesStr += compileStyles(newObject);
+        } else {
+          let newStyle = `${kebabCase(property)}:${value};`;
+          // If the property is prefixed, add an additional dash at the beginning.
+          ['Webkit', 'ms', 'Moz', 'O'].forEach((prefix) => {
+            if (property.startsWith(prefix)) {
+              newStyle = `-${newStyle}`;
+            }
+          });
+          stylesStr += newStyle;
+        }
+      });
+      stylesStr += '}';
+      return stylesStr;
+    },
+    ''
+  );
+  if (Object.keys(mediaQueries).length) {
+    compiled += compileStyles(sortStylesByMediaQueryLength(mediaQueries));
+  }
+  return compiled;
 }
 
 // Shortcut for adjusting style object to reflect new font size on adjustments
@@ -649,6 +652,36 @@ function adjustFontSizeTo(
     },
     {}
   );
+}
+
+function sortStylesByMediaQueryLength(styles: HarmoniousStyles) {
+  const output: HarmoniousStyles = {};
+
+  Object.keys(styles)
+    .sort((a, b) => {
+      if (a.startsWith('@') && b.startsWith('@')) {
+        // Sort queries from smallest to largest
+        let queryValueA = parseInt(a.match(/\d+/g)?.[0] || '', 10);
+        let queryValueB = parseInt(a.match(/\d+/g)?.[0] || '', 10);
+        return queryValueA > queryValueB
+          ? -1
+          : queryValueA < queryValueB
+          ? 1
+          : 0;
+      }
+      if (a.startsWith('@')) {
+        return 1;
+      }
+      if (b.startsWith('@')) {
+        return -1;
+      }
+      return 0;
+    })
+    .forEach((key) => {
+      output[key] = styles[key];
+    });
+
+  return output;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -693,7 +726,10 @@ type BaseOptions = {
 };
 
 export type HarmoniousTypeOptions = BaseOptions & {
-  breakpoints?: Record<string | number, BaseOptions>;
+  baseBreakpointKey?: string;
+  breakpoints?: {
+    [key: string]: BaseOptions & { width: number };
+  };
   breakpointUnit?: 'px' | 'rem';
   plugins?: HarmoniousTypePlugin[];
 };
@@ -706,14 +742,11 @@ type HarmoniousTypeConfigBase = {
   blockMarginBottom: number;
 };
 
-export type HarmoniousTypeConfig = {
+export type HarmoniousTypeConfig = HarmoniousTypeConfigBase & {
   title: string;
   rhythmUnit: 'px' | 'em' | 'rem';
   breakpointUnit: 'px' | 'rem';
-  breakpoints: {
-    0: HarmoniousTypeConfigBase;
-    [key: number]: HarmoniousTypeConfigBase;
-  };
+  breakpoints: Record<string, HarmoniousTypeConfigBase & { width: number }>;
   plugins: HarmoniousTypePlugin[];
 };
 
@@ -742,8 +775,8 @@ export type HarmoniousTypePlugin = {
   setConfig?(config: HarmoniousTypeConfig): HarmoniousTypeConfig;
   setStyles?(
     rhythms: {
-      [key: number]: HarmoniousRhythm;
-      0: HarmoniousRhythm;
+      _base: HarmoniousRhythm;
+      [key: string]: HarmoniousRhythm;
     },
     config: HarmoniousTypeConfig,
     styles: HarmoniousStyles

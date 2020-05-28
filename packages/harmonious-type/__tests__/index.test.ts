@@ -51,24 +51,28 @@ describe('HarmoniousType.scale', () => {
 });
 
 describe('HarmoniousType.toJSON', () => {
-  let json = new HarmoniousType({
+  let ht = new HarmoniousType({
     breakpoints: {
-      600: {
+      medium: {
+        width: 600,
         baseFontSize: 18,
         scaleRatio: 2,
       },
-      1000: {
+      large: {
+        width: 1000,
         baseFontSize: 22,
         scaleRatio: 2.5,
         baseLineHeight: 1.8,
       },
-      1600: {
+      xlarge: {
+        width: 1600,
         baseFontSize: 22,
         scaleRatio: 2.5,
         baseLineHeight: 1.8,
       },
     },
-  }).toJSON();
+  });
+  let json = ht.toJSON();
   it('should return CSS as JSON', async () => {
     expect(isObject(json)).toBeTruthy();
     expect(json.html).toBeTruthy();
@@ -96,7 +100,7 @@ describe('HarmoniousType.toJSON', () => {
     }).not.toThrow();
   });
   it('should sort media queries from smallest to largest', () => {
-    let mediaQueryKeys = Object.keys(json)
+    let mediaQueryKeys = Object.keys(json.html)
       .filter((k) => k.startsWith('@'))
       .map((k) => parseInt((k.match(/\d+/g) && k.match(/\d+/g)![0]) || '', 10));
     expect(mediaQueryKeys).toEqual([600, 1000, 1600]);
@@ -107,11 +111,13 @@ describe('HarmoniousType.toString', () => {
   it('should return CSS as a string', () => {
     let string = new HarmoniousType({
       breakpoints: {
-        600: {
+        medium: {
+          width: 600,
           baseFontSize: 18,
           scaleRatio: 2,
         },
-        1000: {
+        large: {
+          width: 1000,
           baseFontSize: 22,
           scaleRatio: 2.5,
           baseLineHeight: 1.8,
