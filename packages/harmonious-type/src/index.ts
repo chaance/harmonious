@@ -381,7 +381,7 @@ export class HarmoniousType {
       // h6
       -1.5 / 5,
     ].forEach((ratio, i) => {
-      let headerElement = `h${i + 1}`;
+      let headerElement = `h${i + 1}` as StyleSelector;
 
       styles = setStyles(styles, headerElement, null, ({ convert, scale }) => ({
         fontSize: convert(scale(ratio).fontSize, rhythmUnit),
@@ -398,13 +398,13 @@ export class HarmoniousType {
       );
     }
 
-    const output: typeof styles = {};
+    const output: HarmoniousStyles = {};
 
-    for (let key in sortStylesByMediaQueryLength(styles)) {
-      output[key] = styles[key];
+    for (const key in sortStylesByMediaQueryLength(styles)) {
+      output[key as StyleSelector] = styles[key as StyleSelector];
     }
 
-    return output;
+    return output as Required<HarmoniousStyles>;
   }
 
   public toString() {
@@ -521,7 +521,7 @@ function getStylesSetter(
 ) {
   return function setStyles(
     styles: HarmoniousStyles,
-    selectors: string | string[],
+    selectors: StyleSelector | StyleSelector[],
     baseRules: CSS.Properties | null,
     responsiveRules?: (sizes: {
       baseFontSize: number;
@@ -608,9 +608,9 @@ function getStylesSetter(
 }
 
 function compileStyles(styles: HarmoniousStyles): string {
-  let mediaQueries: HarmoniousStyles = {};
+  let mediaQueries: { [key: string]: CSS.Properties } = {};
   let compiled = Object.entries(styles).reduce(
-    (stylesStr, [selector, ruleSet]) => {
+    (stylesStr, [selector, ruleSet = {}]) => {
       stylesStr += `${selector}{`;
       Object.entries(ruleSet).forEach(([property, value]) => {
         if (property.startsWith('@') && isObject(value)) {
@@ -703,7 +703,7 @@ function sortStylesByMediaQueryLength(styles: HarmoniousStyles) {
       return 0;
     })
     .forEach((key) => {
-      output[key] = styles[key];
+      output[key as StyleSelector] = styles[key as StyleSelector];
     });
 
   return output;
@@ -794,7 +794,7 @@ type FontSizeAdjustmentFunction = (
   fromSize?: string | number | undefined
 ) => { fontSize: string | number; lineHeight: number };
 
-export type HarmoniousStyles = { [key: string]: CSS.Properties };
+export type HarmoniousStyles = { [key in StyleSelector]?: CSS.Properties };
 
 export type HarmoniousTypePlugin = {
   setConfig?(config: HarmoniousTypeConfig): HarmoniousTypeConfig;
@@ -807,3 +807,55 @@ export type HarmoniousTypePlugin = {
     styles: HarmoniousStyles
   ): HarmoniousStyles;
 };
+
+type StyleSelector =
+  | 'html'
+  | '*'
+  | '*:before'
+  | '*:after'
+  | 'body'
+  | 'img'
+  | 'h1'
+  | 'h2'
+  | 'h3'
+  | 'h4'
+  | 'h5'
+  | 'h6'
+  | 'hgroup'
+  | 'ul'
+  | 'ol'
+  | 'dl'
+  | 'dd'
+  | 'p'
+  | 'figure'
+  | 'pre'
+  | 'table'
+  | 'fieldset'
+  | 'blockquote'
+  | 'form'
+  | 'noscript'
+  | 'iframe'
+  | 'hr'
+  | 'address'
+  | 'li'
+  | 'ol li'
+  | 'ul li'
+  | 'li > ol'
+  | 'li > ul'
+  | 'blockquote *:last-child'
+  | 'li *:last-child'
+  | 'p *:last-child'
+  | 'li > p'
+  | 'code'
+  | 'kbd'
+  | 'samp'
+  | 'abbr'
+  | 'acronym'
+  | 'abbr[title]'
+  | 'thead'
+  | 'td'
+  | 'th'
+  | 'th:first-child'
+  | 'td:first-child'
+  | 'th:last-child'
+  | 'td:last-child';
