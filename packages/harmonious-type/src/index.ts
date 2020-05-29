@@ -5,15 +5,12 @@ import {
 } from 'harmonious-rhythm';
 import { ratios } from 'harmonious-scale';
 import { isNumber, isObject, kebabCase, pick } from 'lodash';
-import { Properties } from 'csstype';
 import * as CSS from 'csstype';
 import {
   CSSUnitConverter,
   getDefiniteNumberWithFallback,
   unit,
 } from 'harmonious-utils';
-import postcss from 'postcss';
-import postcssJs from 'postcss-js';
 
 const rhythmConfigKeys = Object.keys(defaultRhythmConfig);
 
@@ -443,29 +440,38 @@ function getConfig(
 
   // We want to search our breakpoints in descending order to find the largest
   // value that is less than the value being searched for
-  let breakpointKeys = Object.keys(opts.breakpoints)
-    .map((bp) => parseInt((opts.breakpoints[bp] as any).width, 10))
-    .filter((num) => !isNaN(num))
-    .sort((a, b) => b - a);
+  let breakpointPairs = Object.keys(opts.breakpoints)
+    .map(
+      (bp) => [bp, parseInt((opts.breakpoints[bp] as any).width, 10)] as const
+    )
+    .filter(([, num]) => !isNaN(num))
+    .sort(([, a], [, b]) => a - b);
 
-  let breakpoints: HarmoniousTypeConfig['breakpoints'] = breakpointKeys
-    .sort()
-    .reduce((prev, cur) => {
+  let breakpoints: HarmoniousTypeConfig['breakpoints'] = breakpointPairs.reduce(
+    (prev, [bp, width]) => {
       return {
         ...prev,
-        [cur]: {
-          key: findBreakpointMatch('key', cur) as string,
+        [bp]: {
+          width,
           baseFontSize: getDefiniteNumberWithFallback(
-            findBreakpointMatch('baseFontSize', cur),
+            findBreakpointMatch('baseFontSize', [bp, width]),
             defaultConfig.baseFontSize
           ),
-          baseLineHeight: findBreakpointMatch('baseLineHeight', cur),
-          headerLineHeight: findBreakpointMatch('headerLineHeight', cur),
-          scaleRatio: findBreakpointMatch('scaleRatio', cur),
-          blockMarginBottom: findBreakpointMatch('blockMarginBottom', cur),
+          baseLineHeight: findBreakpointMatch('baseLineHeight', [bp, width]),
+          headerLineHeight: findBreakpointMatch('headerLineHeight', [
+            bp,
+            width,
+          ]),
+          scaleRatio: findBreakpointMatch('scaleRatio', [bp, width]),
+          blockMarginBottom: findBreakpointMatch('blockMarginBottom', [
+            bp,
+            width,
+          ]),
         },
       };
-    }, {});
+    },
+    {}
+  );
 
   const cfg: HarmoniousTypeConfig = {
     ...pick(opts, ['title', 'rhythmUnit', 'breakpointUnit']),
@@ -482,17 +488,21 @@ function getConfig(
     cfg
   );
 
-  function findBreakpointMatch(property: any, breakpoint: number): any {
-    let p = property as keyof BaseOptions; // 💩
-    if (opts.breakpoints[breakpoint][p]) {
-      return opts.breakpoints[breakpoint][p];
+  function findBreakpointMatch(
+    property: keyof BaseOptions,
+    [breakpoint, width]: [string, number]
+  ): any {
+    if (opts.breakpoints[breakpoint][property]) {
+      return opts.breakpoints[breakpoint][property];
     }
-    for (let bp of breakpointKeys) {
-      if (opts.breakpoints[bp][p] && bp <= breakpoint) {
-        return opts.breakpoints[bp][p];
+    // Iterate through pairs sorted from smallest to largest, then return first
+    // matching value.
+    for (let [bp, val] of breakpointPairs) {
+      if (opts.breakpoints[bp][property] && val <= width) {
+        return opts.breakpoints[bp][property];
       }
     }
-    return opts[p];
+    return opts[property];
   }
 }
 
@@ -537,7 +547,8 @@ function getStylesSetter(
           let hm = rhythms[b];
           let { fontSize, lineHeight } = hm.establishBaseline();
           let { convert, rhythm, baseFontSize, scale } = hm;
-          let { blockMarginBottom, headerLineHeight } = config.breakpoints[b];
+          let { blockMarginBottom, headerLineHeight } =
+            config.breakpoints[b] || config;
           let bmb = '';
           if (isNumber(blockMarginBottom)) {
             bmb = rhythm(blockMarginBottom);
@@ -653,6 +664,20 @@ function adjustFontSizeTo(
     {}
   );
 }
+
+// function sortBreakpointsObject(bp: {
+//   [key: string]: BaseOptions & { width: number };
+// }) {
+//   const output: typeof bp = {};
+//   Object.keys(bp)
+//     .sort((a, b) =>
+//       bp[a].width > bp[b].width ? -1 : bp[a].width < bp[b].width ? 1 : 0
+//     )
+//     .forEach((key) => {
+//       output[key] = bp[key];
+//     });
+//   return output;
+// }
 
 function sortStylesByMediaQueryLength(styles: HarmoniousStyles) {
   const output: HarmoniousStyles = {};

@@ -66,9 +66,8 @@ describe('HarmoniousType.toJSON', () => {
       },
       xlarge: {
         width: 1600,
-        baseFontSize: 22,
-        scaleRatio: 2.5,
-        baseLineHeight: 1.8,
+        baseFontSize: 24,
+        scaleRatio: 2.75,
       },
     },
   });
@@ -122,6 +121,11 @@ describe('HarmoniousType.toString', () => {
           scaleRatio: 2.5,
           baseLineHeight: 1.8,
         },
+        xlarge: {
+          width: 1600,
+          baseFontSize: 24,
+          scaleRatio: 2.75,
+        },
       },
     }).toString();
     expect(typeof string).toEqual('string');
@@ -163,13 +167,7 @@ describe('HarmoniousType plugins', () => {
       setConfig(prevConfig) {
         return {
           ...prevConfig,
-          breakpoints: {
-            ...prevConfig.breakpoints,
-            [0]: {
-              ...prevConfig.breakpoints[0],
-              baseFontSize: 50,
-            },
-          },
+          baseFontSize: 50,
         };
       },
     };
