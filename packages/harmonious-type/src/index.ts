@@ -366,6 +366,10 @@ export class HarmoniousType {
       })
     );
 
+    styles = setStyles(styles, 'title', null, ({ convert, scale }) => ({
+      fontSize: convert(scale(7 / 5).fontSize, rhythmUnit),
+    }));
+
     // Header scale ratios
     [
       // h1
@@ -815,6 +819,7 @@ type StyleSelector =
   | '*:after'
   | 'body'
   | 'img'
+  | 'title'
   | 'h1'
   | 'h2'
   | 'h3'
