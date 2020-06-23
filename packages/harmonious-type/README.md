@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/chancestrickland/harmonious/master/static/harmonious.svg" width="440" height="98" alt="Harmonious" />
+  <img src="https://raw.githubusercontent.com/chancestrickland/harmonious/maintatic/harmonious.svg" width="440" height="98" alt="Harmonious" />
 </div>
 
 <div align="center">
