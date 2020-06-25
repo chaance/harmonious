@@ -36,7 +36,7 @@ export async function createRollupConfig(
   const outputName = [
     `${paths.packageDist}/${opts.name}`,
     opts.format,
-    opts.env,
+    opts.format === 'esm' ? '' : opts.env,
     shouldMinify ? 'min' : '',
     'js',
   ]
@@ -169,7 +169,6 @@ export async function createRollupConfig(
       sourceMaps(),
       shouldMinify &&
         terser({
-          sourcemap: true,
           output: { comments: false },
           compress: {
             keep_infinity: true,
@@ -272,6 +271,13 @@ function createAllFormats(
     {
       ...opts,
       format: 'esm',
+      env: 'development',
+      input,
+    },
+    {
+      ...opts,
+      format: 'esm',
+      env: 'production',
       input,
     },
   ].filter(Boolean) as [ScriptOpts, ...ScriptOpts[]];

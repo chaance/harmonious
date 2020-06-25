@@ -27,7 +27,7 @@
     "tslib": "^2.0.0"
   },
   "main": "dist/index.js",
-  "module": "dist/harmonious-type.esm.js",
+  "module": "dist/harmonious-type.esm.min.js",
   "typings": "dist/index.d.ts",
   "files": [
     "README.md",
