@@ -32,73 +32,26 @@ const defaultConfig = {
 export class HarmoniousType {
   /**
    * The configuration object for the HarmoniousType instance.
-   *
-   * @type {HarmoniousTypeConfig}
    * @memberof HarmoniousType
    */
   private readonly config: HarmoniousTypeConfig;
 
   /**
-   * Unit conversion method based on the base font size.
-   *
-   * @type {CSSUnitConverter}
-   * @memberof HarmoniousType
-   */
-  public readonly convert: CSSUnitConverter;
-
-  /**
-   * Base font size
-   * @type {number}
-   * @memberof HarmoniousType
-   */
-  public readonly baseFontSize: number;
-
-  /**
    * The breakpoints defined as an ascending array
-   *
-   * @type {Record<string, number>}
    * @memberof HarmoniousType
    */
   public readonly breakpoints: Record<string, number>;
 
-  public readonly rhythm: (
-    lines?: number,
-    fontSize?: string | number | undefined,
-    offset?: number | undefined
-  ) => string;
-
-  public readonly rhythmicLineHeight: (
-    lines?: number,
-    fontSize?: string | number | undefined,
-    offset?: number | undefined
-  ) => number;
-
-  public readonly establishBaseline: () => {
-    fontSize: string;
-    lineHeight: number;
-  };
-
-  public readonly linesForFontSize: (fontSize: string | number) => number;
-
-  public readonly adjustFontSizeTo: FontSizeAdjustmentFunction;
-
-  public readonly getLineHeightFromValue: (value: string | number) => number;
-
+  /**
+   * @memberof HarmoniousType
+   */
   public readonly rhythms: {
     _base: HarmoniousRhythm;
     [key: string]: HarmoniousRhythm;
   };
 
-  public readonly scale: (
-    value?: number
-  ) => {
-    fontSize: string | number;
-    lineHeight: number;
-  };
-
   public constructor(opts?: HarmoniousTypeOptions) {
     this.config = getConfig(opts);
-
     this.rhythms = Object.keys(this.config.breakpoints).reduce(
       (prev, cur) => {
         return {
@@ -111,8 +64,6 @@ export class HarmoniousType {
       { _base: new HarmoniousRhythm(pick(this.config, rhythmConfigKeys)) }
     ) as any;
 
-    const baseRhythm = this.rhythms._base;
-
     this.breakpoints = Object.keys(this.config.breakpoints).reduce(
       (prev, cur) => ({
         ...prev,
@@ -120,15 +71,154 @@ export class HarmoniousType {
       }),
       {}
     );
-    this.baseFontSize = baseRhythm.baseFontSize;
-    this.convert = baseRhythm.convert;
-    this.rhythm = baseRhythm.rhythm;
-    this.scale = baseRhythm.scale;
-    this.rhythmicLineHeight = baseRhythm.rhythmicLineHeight;
-    this.establishBaseline = baseRhythm.establishBaseline;
-    this.linesForFontSize = baseRhythm.linesForFontSize;
-    this.adjustFontSizeTo = baseRhythm.adjustFontSizeTo;
-    this.getLineHeightFromValue = baseRhythm.getLineHeightFromValue;
+  }
+
+  /**
+   * @param breakpoint
+   * @private
+   */
+  private getRhythm(breakpoint: string | null | undefined, callSrc: string) {
+    let bp = '_base';
+    if (__DEV__) {
+      if (breakpoint && this.rhythms[breakpoint] === undefined) {
+        console.warn(
+          `The breakpoint provided to HarmoniousType.${callSrc} was not` +
+            ` found in the object's configuration.`
+        );
+      }
+    }
+    if (breakpoint && this.rhythms[breakpoint] != null) {
+      bp = breakpoint;
+    }
+    return this.rhythms[bp];
+  }
+
+  /**
+   * @param lines
+   * @param options
+   */
+  public rhythm(
+    options: {
+      lines?: number;
+      breakpoint?: string;
+      fontSize?: string | number | undefined;
+      offset?: number | undefined;
+    } = {}
+  ) {
+    let rhythm = this.getRhythm(options.breakpoint, this.rhythm.name);
+    return rhythm.rhythm(options.lines, options.fontSize, options.offset);
+  }
+
+  /**
+   * @param value
+   * @param options
+   */
+  public scale(value?: number, options: { breakpoint?: string } = {}) {
+    let rhythm = this.getRhythm(options.breakpoint, this.scale.name);
+    return rhythm.scale(value);
+  }
+
+  /**
+   * @param toSize
+   * @param options
+   */
+  public adjustFontSizeTo(
+    toSize: string | number,
+    options: {
+      lines?: number | 'auto';
+      fromSize?: string | number | undefined;
+      breakpoint?: string;
+    } = {}
+  ) {
+    let rhythm = this.getRhythm(options.breakpoint, this.adjustFontSizeTo.name);
+    return rhythm.adjustFontSizeTo(toSize, options.lines, options.fromSize);
+  }
+
+  /**
+   * @param options
+   */
+  public rhythmicLineHeight(
+    options: {
+      lines?: number;
+      fontSize?: string | number | undefined;
+      offset?: number | undefined;
+      breakpoint?: string;
+    } = {}
+  ) {
+    let rhythm = this.getRhythm(
+      options.breakpoint,
+      this.rhythmicLineHeight.name
+    );
+    return rhythm.rhythmicLineHeight(
+      options.lines,
+      options.fontSize,
+      options.offset
+    );
+  }
+
+  public establishBaseline(breakpoint?: string) {
+    let rhythm = this.getRhythm(breakpoint, this.establishBaseline.name);
+    return rhythm.establishBaseline();
+  }
+
+  /**
+   * Unit conversion method based on the base font size.
+   * @param length
+   * @param toUnit
+   * @param options
+   */
+  public convert(
+    length: string | number,
+    toUnit: 'px' | 'em' | 'rem' | 'ex',
+    options: {
+      fromContext?: string | number | undefined;
+      toContext?: string | number | undefined;
+      breakpoint?: string;
+    }
+  ) {
+    let rhythm = this.getRhythm(options.breakpoint, this.convert.name);
+    return rhythm.convert(
+      length,
+      toUnit,
+      options.fromContext,
+      options.toContext
+    );
+  }
+
+  /**
+   * @param fontSize
+   * @param options
+   */
+  public linesForFontSize(
+    fontSize: string | number,
+    options: { breakpoint?: string } = {}
+  ) {
+    let rhythm = this.getRhythm(options.breakpoint, this.linesForFontSize.name);
+    return rhythm.linesForFontSize(fontSize);
+  }
+
+  /**
+   * @param value
+   * @param options
+   */
+  public getLineHeightFromValue(
+    value: string | number,
+    options: { breakpoint?: string } = {}
+  ) {
+    let rhythm = this.getRhythm(
+      options.breakpoint,
+      this.getLineHeightFromValue.name
+    );
+    return rhythm.getLineHeightFromValue(value);
+  }
+
+  /**
+   * Get the base font size given a breakpoint key
+   * @param breakpoint
+   */
+  public getBaseFontSize(breakpoint?: string) {
+    let rhythm = this.getRhythm(breakpoint, this.getBaseFontSize.name);
+    return rhythm.baseFontSize;
   }
 
   public toJSON() {

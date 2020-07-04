@@ -8136,7 +8136,7 @@ sisteransi@^1.0.4:
   resolved "https://registry.yarnpkg.com/sisteransi/-/sisteransi-1.0.5.tgz#134d681297756437cc05ca01370d3a7a571075ed"
   integrity sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==
 
-size-limit@^4.5.2:
+size-limit@^4.5.3:
   version "4.5.3"
   resolved "https://registry.yarnpkg.com/size-limit/-/size-limit-4.5.3.tgz#7534fc36695e0b526206c706a8a8353ba4f4d58d"
   integrity sha512-i5zOu9qN+X+eKeBSkVZCFqXtwd4CjgMrRWimB3uA5FW2JM4oCa0qv+CBIb/oNfdMsghrrD3HjSb8pn15XlOu3A==

@@ -7,8 +7,9 @@ import postcss from 'postcss';
 import postcssJs from 'postcss-js';
 
 describe('harmonious-type', () => {
-  it('should return an object with all documented members', () => {
+  it('should return an object with all documented methods', () => {
     let actual = new HarmoniousType();
+    expect(isFunction(actual.getBaseFontSize)).toBeTruthy();
     expect(isFunction(actual.rhythm)).toBeTruthy();
     expect(isFunction(actual.establishBaseline)).toBeTruthy();
     expect(isFunction(actual.linesForFontSize)).toBeTruthy();
@@ -21,32 +22,39 @@ describe('harmonious-type', () => {
 
 describe('HarmoniousType.rhythm', () => {
   it('should provide a valid rhythm unit', () => {
-    let rhythm = new HarmoniousType().rhythm();
-    expect(rhythm).toEqual('1.5rem');
-  });
-
-  it('should accept custom scales', () => {
-    let { fontSize, lineHeight } = new HarmoniousType({
-      scaleRatio: 2,
-    }).scale(1.333);
-    expect(fontSize).toEqual('2.51926rem');
-    expect(lineHeight).toEqual(3);
+    let ht = new HarmoniousType({
+      breakpoints: {
+        medium: {
+          width: 600,
+          baseLineHeight: 2,
+        },
+      },
+    });
+    expect(ht.rhythm()).toEqual('1.5rem');
+    expect(ht.rhythm({ lines: 2 })).toEqual('3rem');
+    expect(ht.rhythm({ breakpoint: 'medium' })).toEqual('2rem');
   });
 });
 
 describe('HarmoniousType.scale', () => {
-  it('should scale', () => {
-    let { fontSize, lineHeight } = new HarmoniousType().scale();
-    expect(fontSize).toEqual('1rem');
-    expect(lineHeight).toEqual(1.5);
-  });
-
-  it('should accept custom scales', () => {
-    let { fontSize, lineHeight } = new HarmoniousType({
-      scaleRatio: 2,
-    }).scale(1.333);
-    expect(fontSize).toEqual('2.51926rem');
-    expect(lineHeight).toEqual(3);
+  it('should scale at various breakpoints', () => {
+    let ht = new HarmoniousType({
+      breakpoints: {
+        medium: {
+          width: 600,
+          scaleRatio: 2,
+        },
+      },
+    });
+    let baseScale = ht.scale();
+    let modScale = ht.scale(1.333);
+    let medScale = ht.scale(2, { breakpoint: 'medium' });
+    expect(baseScale.fontSize).toEqual('1rem');
+    expect(baseScale.lineHeight).toEqual(1.5);
+    expect(modScale.fontSize).toEqual('1.89924rem');
+    expect(modScale.lineHeight).toEqual(2.25);
+    expect(medScale.fontSize).toEqual('4rem');
+    expect(medScale.lineHeight).toEqual(4.5);
   });
 });
 
@@ -175,7 +183,7 @@ describe('HarmoniousType plugins', () => {
       new HarmoniousType({
         baseFontSize: 20,
         plugins: [plugin],
-      }).baseFontSize
+      }).getBaseFontSize()
     ).toBe(50);
   });
 });
