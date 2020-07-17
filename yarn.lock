@@ -3452,10 +3452,10 @@ chardet@^0.7.0:
   resolved "https://registry.yarnpkg.com/chardet/-/chardet-0.7.0.tgz#90094849f0937f2eedc2425d0d28a9e5f0cbad9e"
   integrity sha512-mT8iDcrh03qDGRRmoA2hmBJnxpllMR+0/0qlzjqZES6NdiWDcZkCNAk4rPFZ9Q85r27unkiNNg8ZOiwZXBHwcA==
 
-chokidar@^3.4.0:
-  version "3.4.0"
-  resolved "https://registry.yarnpkg.com/chokidar/-/chokidar-3.4.0.tgz#b30611423ce376357c765b9b8f904b9fba3c0be8"
-  integrity sha512-aXAaho2VJtisB/1fg1+3nlLJqGOuewTzQpd/Tz0yTg2R0e4IGtshYvtjowyEumcBv2z+y4+kc75Mz7j5xJskcQ==
+chokidar@^3.4.1:
+  version "3.4.1"
+  resolved "https://registry.yarnpkg.com/chokidar/-/chokidar-3.4.1.tgz#e905bdecf10eaa0a0b1db0c664481cc4cbc22ba1"
+  integrity sha512-TQTJyr2stihpC4Sya9hs2Xh+O2wf+igjL36Y75xx2WdHuiICcn/XJza46Jwt0eT5hVpQOzo3FpY3cj3RVYLX0g==
   dependencies:
     anymatch "~3.1.1"
     braces "~3.0.2"
@@ -3605,10 +3605,10 @@ color-name@~1.1.4:
   resolved "https://registry.yarnpkg.com/color-name/-/color-name-1.1.4.tgz#c2a09a87acbde69543de6f63fa3995c826c536a2"
   integrity sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==
 
-colorette@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/colorette/-/colorette-1.2.0.tgz#45306add826d196e8c87236ac05d797f25982e63"
-  integrity sha512-soRSroY+OF/8OdA3PTQXwaDJeMc7TfknKKrxeSCencL2a4+Tx5zhxmmv7hdpCjhKBjehzp8+bwe/T68K0hpIjw==
+colorette@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/colorette/-/colorette-1.2.1.tgz#4d0b921325c14faf92633086a536db6e89564b1b"
+  integrity sha512-puCDz0CzydiSYOrnXpz/PKd69zRrribezjtE9yd4zvytoRc8+RY/KJPvtPFKZS3E3wP6neGyMe0vOTlHO5L3Pw==
 
 columnify@^1.5.4:
   version "1.5.4"
@@ -8781,14 +8781,14 @@ sisteransi@^1.0.4:
   integrity sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==
 
 size-limit@^4.5.3:
-  version "4.5.3"
-  resolved "https://registry.yarnpkg.com/size-limit/-/size-limit-4.5.3.tgz#7534fc36695e0b526206c706a8a8353ba4f4d58d"
-  integrity sha512-i5zOu9qN+X+eKeBSkVZCFqXtwd4CjgMrRWimB3uA5FW2JM4oCa0qv+CBIb/oNfdMsghrrD3HjSb8pn15XlOu3A==
+  version "4.5.5"
+  resolved "https://registry.yarnpkg.com/size-limit/-/size-limit-4.5.5.tgz#ce89846dfa947d4fafaa0dd4baf6d7e8888ea5be"
+  integrity sha512-rh4HSU0UVbOjX0vrzJjPjeCvPz6l+xW6QiA+BCAoLv1WzfnklBUnOdHmboF3UzZIxuNa1TmvCUCCDKmIC5XDVw==
   dependencies:
     bytes "^3.1.0"
-    chokidar "^3.4.0"
+    chokidar "^3.4.1"
     ci-job-number "^1.2.2"
-    colorette "^1.2.0"
+    colorette "^1.2.1"
     cosmiconfig "^6.0.0"
     globby "^11.0.1"
     ora "^4.0.4"
