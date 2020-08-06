@@ -901,9 +901,9 @@
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
 "@chancedigital/eslint-config@^7.1.0":
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/@chancedigital/eslint-config/-/eslint-config-7.1.0.tgz#097f4ea5c98e427b08624e32ecb330a4289c915a"
-  integrity sha512-iuxfq4nuUNOvY+Kw1J/r/t3nplQlq1CQFaSm00wdNw36OpouPK0cMS7gm/0IzsNeLjMOvMlGt+xBxaskeguV5A==
+  version "7.3.0"
+  resolved "https://registry.yarnpkg.com/@chancedigital/eslint-config/-/eslint-config-7.3.0.tgz#823d036f953982841c70531967db21b6b99f0d5a"
+  integrity sha512-ZEgAmUBZn/n1y0ymNxHqLvVQNw95+P/QP846ySorEzjxJzbTgTZB89i9UreLAZdPjNAQ8bmK6OuU/PGeweKWIQ==
   dependencies:
     confusing-browser-globals "^1.0.9"
 
