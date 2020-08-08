@@ -19,7 +19,7 @@
     "size": "size-limit"
   },
   "dependencies": {
-    "csstype": "^2.6.10",
+    "csstype": "^3.0.2",
     "harmonious-rhythm": "^0.0.10",
     "harmonious-utils": "^0.0.10",
     "lodash": "^4.17.15",
