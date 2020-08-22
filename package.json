@@ -64,7 +64,7 @@
     "lodash": "^4.17.15",
     "lodash-es": "^4.17.15",
     "mri": "^1.1.5",
-    "ora": "^4.0.4",
+    "ora": "^5.0.0",
     "prettier": "^2.0.5",
     "pretty-quick": "^2.0.1",
     "progress-estimator": "^0.3.0",
