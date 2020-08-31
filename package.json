@@ -71,7 +71,7 @@
     "rimraf": "^3.0.2",
     "rollup": "^2.21.0",
     "rollup-plugin-sourcemaps": "^0.6.2",
-    "rollup-plugin-terser": "^6.1.0",
+    "rollup-plugin-terser": "^7.0.1",
     "rollup-plugin-typescript2": "^0.27.1",
     "size-limit": "^4.5.3",
     "tiny-glob": "^0.2.6",
