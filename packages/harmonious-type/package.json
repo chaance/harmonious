@@ -19,12 +19,12 @@
     "size": "size-limit"
   },
   "dependencies": {
-    "csstype": "^3.0.2",
+    "csstype": "^3.0.3",
     "harmonious-rhythm": "^0.0.10",
     "harmonious-utils": "^0.0.10",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "postcss-js": "^2.0.3",
-    "tslib": "^2.0.0"
+    "tslib": "^2.0.1"
   },
   "main": "dist/index.js",
   "module": "dist/harmonious-type.esm.min.js",

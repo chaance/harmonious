@@ -1,5 +1,5 @@
 // Forked and simplified from https://github.com/jaredpalmer/tsdx
-import { DEFAULT_EXTENSIONS, createConfigItem } from '@babel/core';
+import { DEFAULT_EXTENSIONS } from '@babel/core';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import replace from '@rollup/plugin-replace';
@@ -169,7 +169,6 @@ export async function createRollupConfig(
       sourceMaps(),
       shouldMinify &&
         terser({
-          output: { comments: false },
           compress: {
             keep_infinity: true,
             pure_getters: true,
@@ -177,7 +176,6 @@ export async function createRollupConfig(
           },
           ecma: 5,
           toplevel: opts.format === 'cjs',
-          warnings: true,
         }),
     ],
   };
@@ -190,19 +188,19 @@ async function build() {
   await cleanDistFolder();
 
   const logger = await createProgressEstimator();
-  const promise = writeCjsEntryFile(opts.name).catch(logError);
 
-  logger(promise, 'Creating entry file');
+  logger(writeCjsEntryFile(opts.name).catch(logError), 'Creating entry file');
 
   try {
-    const promise = Promise.all(
-      buildConfigs.map(async (inputOptions) => {
-        let bundle = await rollup(inputOptions);
-        await bundle.write(inputOptions.output as OutputOptions);
-      })
+    await logger(
+      Promise.all(
+        buildConfigs.map(async (inputOptions) => {
+          let bundle = await rollup(inputOptions);
+          await bundle.write(inputOptions.output as OutputOptions);
+        })
+      ),
+      'Building modules'
     );
-    logger(promise, 'Building modules');
-    await promise;
 
     // The typescript rollup plugin let's tsc handle dumping the declaration
     // file. Ocassionally its methods for determining where to dump it

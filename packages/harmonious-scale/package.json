@@ -19,8 +19,8 @@
     "size": "size-limit"
   },
   "dependencies": {
-    "lodash": "^4.17.15",
-    "tslib": "^2.0.0"
+    "lodash": "^4.17.20",
+    "tslib": "^2.0.1"
   },
   "main": "dist/index.js",
   "module": "dist/harmonious-scale.esm.min.js",

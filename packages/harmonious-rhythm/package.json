@@ -21,8 +21,8 @@
   "dependencies": {
     "harmonious-scale": "^0.0.10",
     "harmonious-utils": "^0.0.10",
-    "lodash": "^4.17.15",
-    "tslib": "^2.0.0"
+    "lodash": "^4.17.20",
+    "tslib": "^2.0.1"
   },
   "main": "dist/index.js",
   "module": "dist/harmonious-rhythm.esm.min.js",

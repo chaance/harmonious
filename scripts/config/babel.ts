@@ -80,7 +80,8 @@ export function getBabelConfig(options: Opts = {}): TransformOptions {
   };
 }
 
-export default getBabelConfig();
+export const babelConfig = getBabelConfig();
+export default babelConfig;
 
 function createConfigItems(
   type: 'plugin' | 'preset',

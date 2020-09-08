@@ -19,7 +19,7 @@
     "size": "size-limit"
   },
   "dependencies": {
-    "tslib": "^2.0.0"
+    "tslib": "^2.0.1"
   },
   "main": "dist/index.js",
   "module": "dist/harmonious-react.esm.min.js",
