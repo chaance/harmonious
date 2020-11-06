@@ -23,7 +23,7 @@
     "harmonious-rhythm": "^0.0.10",
     "harmonious-utils": "^0.0.10",
     "lodash": "^4.17.20",
-    "postcss-js": "^2.0.3",
+    "postcss-js": "^3.0.3",
     "tslib": "^2.0.1"
   },
   "main": "dist/index.js",
