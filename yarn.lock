@@ -8491,9 +8491,9 @@ rollup@^0.63.4:
     "@types/node" "*"
 
 rollup@^2.26.11:
-  version "2.28.1"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.28.1.tgz#ceedca3cdb013c2fa8f22f958a29c203368159ea"
-  integrity sha512-DOtVoqOZt3+FjPJWLU8hDIvBjUylc9s6IZvy76XklxzcLvAQLtVAG/bbhsMhcWnYxC0TKKcf1QQ/tg29zeID0Q==
+  version "2.38.1"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.38.1.tgz#ecea0f7ce6ef2c1f023fdb79524eb7aeb670ea79"
+  integrity sha512-q07T6vU/V1kqM8rGRRyCgEvIQcIAXoKIE5CpkYAlHhfiWM1Iuh4dIPWpIbqFngCK6lwAB2aYHiUVhIbSWHQWhw==
   optionalDependencies:
     fsevents "~2.1.2"
 
